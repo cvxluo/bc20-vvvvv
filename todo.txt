@@ -1,0 +1,12 @@
+
+Optimizations:
+- Function that returns all locations within sense radius efficiently
+- Ordering lists of MapLocations by closest
+- When searching for things like soup, do a search radiating from the location - should be easy and done without BFS
+
+
+General:
+- Better encryption for blockchain stuff
+- Writing better pathfinding - very challenging, maybe just writing a drone version of the pathfinding
+- Split up functions so it's actually workable
+- Clean up dir list vs directions+center

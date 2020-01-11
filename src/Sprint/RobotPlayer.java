@@ -12,7 +12,14 @@ public strictfp class RobotPlayer {
     static Direction[] directions = {
             Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST,
             Direction.NORTHEAST, Direction.NORTHWEST, Direction.SOUTHEAST, Direction.SOUTHWEST,
+        
+    };
     
+    static Direction[] allDirs = {
+            Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST,
+            Direction.NORTHEAST, Direction.NORTHWEST, Direction.SOUTHEAST, Direction.SOUTHWEST,
+            Direction.CENTER,
+        
     };
     static RobotType[] spawnedByMiner = {RobotType.REFINERY, RobotType.VAPORATOR, RobotType.DESIGN_SCHOOL,
             RobotType.FULFILLMENT_CENTER, RobotType.NET_GUN};
@@ -23,6 +30,11 @@ public strictfp class RobotPlayer {
     static int mapWidth;
     static int mapHeight;
     static MapLocation hqLocation;
+    
+    
+    // Memory variables
+    static MapLocation destination;
+    static MapLocation home;
     
     
     static int state;
@@ -54,6 +66,9 @@ public strictfp class RobotPlayer {
         turnCount = 0;
         mapWidth = rc.getMapWidth();
         mapHeight = rc.getMapHeight();
+        
+        
+        home = rc.getLocation();
         
         
         state = 0;
@@ -111,12 +126,17 @@ public strictfp class RobotPlayer {
                 MapLocation soup1 = soups.pop();
                 message[1] = soup1.x;
                 message[2] = soup1.y;
-    
-                message[3] = rc.getLocation().x;
-                message[4] = rc.getLocation().y;
+                
+            }
+            else {
+                message[1] = -1;
+                message[2] = -1;
                 
             }
             
+            message[3] = rc.getLocation().x;
+            message[4] = rc.getLocation().y;
+    
             message[5] = 341234;
             message[6] = rc.getID();
             
@@ -126,7 +146,7 @@ public strictfp class RobotPlayer {
             }
         }
         
-        if (turnCount < 40) {
+        if (turnCount == 2) {
             for (Direction dir : directions) tryBuild(RobotType.MINER, dir);
         }
         
@@ -138,14 +158,14 @@ public strictfp class RobotPlayer {
         
         int roundNum = rc.getRoundNum();
         System.out.println("STATE " + state);
-        System.out.println("CD " + rc.getCooldownTurns());
+        System.out.println(destination);
         
-        if (state == 0 || state == 1) { // TODO: optimize this, miner doesn't need to check where soup is every turn
-            
+        
+        if (turnCount == 1) { // Setup stuff
             boolean foundSoupBlock = false;
             int[] message = new int[7];
             int blockCheck = 2;
-            
+    
             while (!foundSoupBlock) {
                 System.out.println("USING BLOCK " + blockCheck);
                 Transaction[] block = rc.getBlock(blockCheck);
@@ -155,57 +175,61 @@ public strictfp class RobotPlayer {
                     if (m[0] == 1234567) { message = m; foundSoupBlock = true; break; }
                 }
             }
-            state = 1;
-            
-            
             MapLocation soupLocation = new MapLocation(message[1], message[2]);
+            destination = soupLocation;
             
-            for (Direction dir : directions) {
+            state = 1;
+        }
+        
+        if (state == 1) {
+            for (Direction dir : allDirs) {
                 if (rc.canMineSoup(dir)) {
                     state = 2;
                 }
             }
-    
-            Direction dirToMove = rc.getLocation().directionTo(soupLocation);
-
-            if (rc.canMove(dirToMove)) {
-                rc.move(dirToMove);
+            
+            
+            // If there is no soup left at destination, look for more soup near the destination - need to optimize
+            if (rc.canSenseLocation(destination)) {
+                if (rc.senseSoup(destination) == 0) {
+                    for (int x = 0; x < mapWidth; x++) {
+                        for (int y = 0; y < mapHeight; y++) {
+                            MapLocation loc = new MapLocation(x, y);
+                            if (rc.canSenseLocation(loc)) {
+                                if (rc.senseSoup(loc) != 0) {
+                                    destination = loc;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
             }
+    
+            tryMovingTowards(destination);
         }
         
         if (state == 2) {
-            System.out.println("IM A MINER CARRYING " + rc.getSoupCarrying());
+            System.out.println(" " + rc.getSoupCarrying());
+            
             if (rc.getSoupCarrying() == 100) {
                 state = 3;
             }
+            else if (rc.senseSoup(destination) == 0) { // If no soup left, go back to looking for more soup - maybe consider going back if already over a certain soup amount?
+                state = 1;
+            }
             else {
-                for (Direction dir : directions) {
+                for (Direction dir : allDirs) {
                     if (rc.canMineSoup(dir)) {
                         rc.mineSoup(dir);
                     }
                 }
             }
+            
+            
         }
         
         if (state == 3) {
-            
-            boolean foundSoupBlock = false;
-            int[] message = new int[7];
-            int blockCheck = 2;
-    
-            while (!foundSoupBlock) {
-                System.out.println("USING BLOCK " + blockCheck);
-                Transaction[] block = rc.getBlock(blockCheck);
-                blockCheck++;
-                for (Transaction transaction : block) {
-                    int[] m = transaction.getMessage();
-                    if (m[0] == 1234567) { message = m; foundSoupBlock = true; break; }
-                }
-            }
-            
-            MapLocation hqLocation = new MapLocation(message[3], message[4]);
-            
-            
             for (Direction dir : directions) {
                 if (rc.canDepositSoup(dir)) {
                     System.out.println("DEPOSIT");
@@ -214,10 +238,7 @@ public strictfp class RobotPlayer {
                 }
             }
     
-            Direction dirToMove = rc.getLocation().directionTo(hqLocation);
-            if (rc.canMove(dirToMove)) {
-                rc.move(dirToMove);
-            }
+            tryMovingTowards(home);
             
         }
         
@@ -271,8 +292,8 @@ public strictfp class RobotPlayer {
                 System.out.println("I picked up " + robots[0].getID() + "!");
             }
         } else {
-            // No close robots, so search for robots within sight radius
-            tryMove(randomDirection());
+            // No close robots, so search for robots within sight radius - removed
+            
         }
     }
 
@@ -281,66 +302,44 @@ public strictfp class RobotPlayer {
     }
     
     
-    static LinkedList<MapLocation> findPath(MapLocation destination) {
-        MapLocation currentPosition = rc.getLocation();
-        LinkedList path = new LinkedList<MapLocation>();
+    // Will end the turn
+    // If tile to move is occupied, tries going left a little, then right a little
+    static boolean tryMovingTowards(MapLocation goal) throws GameActionException {
+        // remember to not use this with drones, because they can go over flooded tiles
         
-        LinkedList<MapLocation> queue = new LinkedList<MapLocation>();
+        Direction dirToMove = rc.getLocation().directionTo(goal);
+        MapLocation nextStep = rc.adjacentLocation(dirToMove);
+
         
-        queue.add(rc.getLocation());
-        queue.add(destination);
+        if (rc.canMove(dirToMove) && !rc.senseFlooding(nextStep)) {
+            rc.move(dirToMove);
+        }
         
-        return path;
+        else {
+            System.out.println("BLOCKED");
+            for (int i = 0; i < 4; i++) {
+                Direction left = dirToMove.rotateLeft();
+                Direction right = dirToMove.rotateRight();
+    
+                MapLocation nextLeft = rc.adjacentLocation(left);
+                MapLocation nextRight = rc.adjacentLocation(right);
+    
+    
+                if (rc.canMove(left) && !rc.senseFlooding(nextLeft)) {
+                    rc.move(left);
+                }
+                if (rc.canMove(right) && !rc.senseFlooding(nextRight)) {
+                    rc.move(left);
+                }
+            }
+            
+            // If no valid moves are found
+            return false;
+            
+        }
         
-    }
-
-    /**
-     * Returns a random Direction.
-     *
-     * @return a random Direction
-     */
-    static Direction randomDirection() {
-        return directions[(int) (Math.random() * directions.length)];
-    }
-
-    /**
-     * Returns a random RobotType spawned by miners.
-     *
-     * @return a random RobotType
-     */
-    static RobotType randomSpawnedByMiner() {
-        return spawnedByMiner[(int) (Math.random() * spawnedByMiner.length)];
-    }
-
-    static boolean tryMove() throws GameActionException {
-        for (Direction dir : directions)
-            if (tryMove(dir))
-                return true;
-        return false;
-        // MapLocation loc = rc.getLocation();
-        // if (loc.x < 10 && loc.x < loc.y)
-        //     return tryMove(Direction.EAST);
-        // else if (loc.x < 10)
-        //     return tryMove(Direction.SOUTH);
-        // else if (loc.x > loc.y)
-        //     return tryMove(Direction.WEST);
-        // else
-        //     return tryMove(Direction.NORTH);
-    }
-
-    /**
-     * Attempts to move in a given direction.
-     *
-     * @param dir The intended direction of movement
-     * @return true if a move was performed
-     * @throws GameActionException
-     */
-    static boolean tryMove(Direction dir) throws GameActionException {
-        // System.out.println("I am trying to move " + dir + "; " + rc.isReady() + " " + rc.getCooldownTurns() + " " + rc.canMove(dir));
-        if (rc.isReady() && rc.canMove(dir)) {
-            rc.move(dir);
-            return true;
-        } else return false;
+        return true;
+    
     }
 
     /**
