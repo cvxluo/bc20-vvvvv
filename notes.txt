@@ -34,6 +34,8 @@ Need to think about how to do it - possible methods:
 - Last integer is turn number of robot
 - Second integer is ID of robot sending?
 
+Need to indicate what type of message it is, like if a miner finds more soup
+
 Turn 1 communication:
 HQ message is composed of
 (Should compress, integers can store multiple location values)

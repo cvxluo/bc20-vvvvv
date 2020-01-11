@@ -4,6 +4,8 @@ import battlecode.common.*;
 // Check if this is best structure
 import java.util.LinkedList;
 
+import java.lang.Math;
+
 
 @SuppressWarnings("unchecked")
 public strictfp class RobotPlayer {
@@ -45,7 +47,9 @@ public strictfp class RobotPlayer {
      * For miners:
      * 1 - moving to mining location
      * 2 - mining soup
-     * 3 - moving back to HQ to refine
+     * 3 - moving back to HQ to refine - looking to build stuff
+     *
+     * 4 - exploring map for more soup
      */
     
     
@@ -146,11 +150,9 @@ public strictfp class RobotPlayer {
             }
         }
         
-        if (turnCount == 2) {
+        if (turnCount % 40 == 0) {
             for (Direction dir : directions) tryBuild(RobotType.MINER, dir);
         }
-        
-        
         
     }
 
@@ -158,7 +160,7 @@ public strictfp class RobotPlayer {
         
         int roundNum = rc.getRoundNum();
         System.out.println("STATE " + state);
-        System.out.println(destination);
+        System.out.println("DESTINATION " + destination);
         
         
         if (turnCount == 1) { // Setup stuff
@@ -190,32 +192,29 @@ public strictfp class RobotPlayer {
             
             
             // If there is no soup left at destination, look for more soup near the destination - need to optimize
-            if (rc.canSenseLocation(destination)) {
+            if (rc.canSenseLocation(destination) && rc.getLocation().distanceSquaredTo(destination) < 8) {
                 if (rc.senseSoup(destination) == 0) {
-                    for (int x = 0; x < mapWidth; x++) {
-                        for (int y = 0; y < mapHeight; y++) {
-                            MapLocation loc = new MapLocation(x, y);
-                            if (rc.canSenseLocation(loc)) {
-                                if (rc.senseSoup(loc) != 0) {
-                                    destination = loc;
-                                    break;
-                                }
-                            }
-                        }
-                    }
+                    state = 4;
+                }
+                else {
+                    tryMovingTowards(destination);
                 }
             }
+            
+            else {
+                tryMovingTowards(destination);
+            }
+
     
-            tryMovingTowards(destination);
         }
         
         if (state == 2) {
-            System.out.println(" " + rc.getSoupCarrying());
+            System.out.println("CARRYING " + rc.getSoupCarrying());
             
             if (rc.getSoupCarrying() == 100) {
                 state = 3;
             }
-            else if (rc.senseSoup(destination) == 0) { // If no soup left, go back to looking for more soup - maybe consider going back if already over a certain soup amount?
+            else if (rc.canSenseLocation(destination) && rc.senseSoup(destination) == 0) { // If no soup left, go back to looking for more soup - maybe consider going back if already over a certain soup amount?
                 state = 1;
             }
             else {
@@ -225,11 +224,35 @@ public strictfp class RobotPlayer {
                     }
                 }
             }
-            
-            
         }
         
         if (state == 3) {
+            
+            if (rc.getLocation().distanceSquaredTo(home) < 10) {
+                RobotInfo[] robots = rc.senseNearbyRobots();
+                boolean designExists = false;
+                boolean fulfillExists = false;
+                for (RobotInfo robot : robots) {
+                    if (robot.getType() == RobotType.DESIGN_SCHOOL) designExists = true;
+                    if (robot.getType() == RobotType.FULFILLMENT_CENTER) fulfillExists = true;
+                }
+                if (!designExists) {
+                    for (Direction dir : directions) {
+                        if (rc.canBuildRobot(RobotType.DESIGN_SCHOOL, dir) && rc.getTeamSoup() > 150) {
+                            rc.buildRobot(RobotType.DESIGN_SCHOOL, dir);
+                        }
+                    }
+                }
+    
+                if (!designExists) {
+                    for (Direction dir : directions) {
+                        if (rc.canBuildRobot(RobotType.FULFILLMENT_CENTER, dir) && rc.getTeamSoup() > 150) {
+                            rc.buildRobot(RobotType.FULFILLMENT_CENTER, dir);
+                        }
+                    }
+                }
+            }
+            
             for (Direction dir : directions) {
                 if (rc.canDepositSoup(dir)) {
                     System.out.println("DEPOSIT");
@@ -240,6 +263,32 @@ public strictfp class RobotPlayer {
     
             tryMovingTowards(home);
             
+        }
+        
+        if (state == 4) {
+            boolean foundSoup = false;
+            for (int x = 0; x < mapWidth; x++) {
+                for (int y = 0; y < mapHeight; y++) {
+                    MapLocation loc = new MapLocation(x, y);
+                    if (rc.canSenseLocation(loc)) {
+                        if (rc.senseSoup(loc) != 0) {
+                            destination = loc;
+                            foundSoup = true;
+                            break;
+                        }
+                    }
+                }
+            }
+    
+            if (!foundSoup) {
+                int quadrant = findQuadrant(rc.getLocation());
+                if (quadrant == 1) destination = new MapLocation(0, 0);
+                if (quadrant == 2) destination = new MapLocation(mapWidth - 1, 0);
+                if (quadrant == 3) destination = new MapLocation(mapWidth - 1, mapHeight - 1);
+                if (quadrant == 4) destination = new MapLocation(0, mapHeight - 1);
+            }
+            
+            state = 1;
         }
         
 
@@ -277,7 +326,7 @@ public strictfp class RobotPlayer {
     }
 
     static void runLandscaper() throws GameActionException {
-
+    
     }
 
     static void runDeliveryDrone() throws GameActionException {
@@ -341,6 +390,27 @@ public strictfp class RobotPlayer {
         return true;
     
     }
+    
+    
+    
+    // Standard quadrant system
+    static int findQuadrant(MapLocation here) {
+        if (here.x < mapWidth / 2) {
+            if (here.y < mapHeight / 2) return 3;
+            else return 2;
+        }
+        else {
+            if (here.y < mapHeight / 2) return 4;
+            else return 1;
+        }
+    }
+    
+    static int getElevation() {
+        double E = 2.718281828459045;
+        int x = rc.getRoundNum();
+        return 1;
+        // return (int) (Math.exp(0.0028*x - 1.38*Math.sin(0.00157*x - 1.73) + 1.38*sin(-1.73)) - 1);
+    }
 
     /**
      * Attempts to build a given robot in a given direction.
@@ -356,45 +426,6 @@ public strictfp class RobotPlayer {
             return true;
         } else return false;
     }
+    
 
-    /**
-     * Attempts to mine soup in a given direction.
-     *
-     * @param dir The intended direction of mining
-     * @return true if a move was performed
-     * @throws GameActionException
-     */
-    static boolean tryMine(Direction dir) throws GameActionException {
-        if (rc.isReady() && rc.canMineSoup(dir)) {
-            rc.mineSoup(dir);
-            return true;
-        } else return false;
-    }
-
-    /**
-     * Attempts to refine soup in a given direction.
-     *
-     * @param dir The intended direction of refining
-     * @return true if a move was performed
-     * @throws GameActionException
-     */
-    static boolean tryRefine(Direction dir) throws GameActionException {
-        if (rc.isReady() && rc.canDepositSoup(dir)) {
-            rc.depositSoup(dir, rc.getSoupCarrying());
-            return true;
-        } else return false;
-    }
-
-
-    static void tryBlockchain() throws GameActionException {
-        if (turnCount < 3) {
-            int[] message = new int[7];
-            for (int i = 0; i < 7; i++) {
-                message[i] = 123;
-            }
-            if (rc.canSubmitTransaction(message, 10))
-                rc.submitTransaction(message, 10);
-        }
-        // System.out.println(rc.getRoundMessages(turnCount-1));
-    }
 }
