@@ -1,0 +1,45 @@
+Strategy Ideas:
+- Making walls around the HQ
+- Sending waves of drones to pick up enemy units and drop them in water
+- Net shooter lattice?
+
+- Implement state based thing like last year
+
+Tunnel strat:
+Use landscapers to make a tunnel to the enemy HQ, placing down net guns - no other landscapers could enter to mess it up
+Maybe alternate landscapers and net guns in a 3 wide tunnel, so that whenever any dirt is placed on the sides it can be picked up again
+Go to the enemy HQ and use a drone to put a landscaper next to it, to bury it
+
+Rush strat:
+Build landscaper, grab dirt, rush to enemey base
+Wait long enough, then build miner if strat doesn't work
+
+
+Plan:
+Wall around HQ - surrounded by drones, except for one tile?
+DDD
+DHD
+DDD
+Counter would be a net shooter built at the base - maybe consider that for offense
+
+
+
+To communicate:
+- First integer is an identifier
+Need to think about how to do it - posisble methods:
+    - Hash of ID
+    - Flat value
+    - Flat value but modified each turn - maybe first value is different then hashed?
+- Last integer is turn number of robot
+- Second integer is ID of robot sending?
+
+Turn 1 communication:
+HQ message is composed of
+(Should compress, integers can store multiple location values)
+    - Flat value
+    - Soup Location X1
+    - Soup Location Y1
+    - HQ Location X2
+    - HQ Location Y2
+    - garbage
+    - HQ ID
