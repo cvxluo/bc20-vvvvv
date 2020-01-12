@@ -46,3 +46,10 @@ HQ message is composed of
     - HQ Location Y2
     - garbage
     - HQ ID
+
+
+
+Things that should be communicated:
+    - Soup locations
+    - Enemy HQ locations
+    - Flood areas

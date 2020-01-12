@@ -37,6 +37,7 @@ public strictfp class RobotPlayer {
     // Memory variables
     static MapLocation destination;
     static MapLocation home;
+    static int numBuilt;
     
     
     static int state;
@@ -50,6 +51,11 @@ public strictfp class RobotPlayer {
      * 3 - moving back to HQ to refine - looking to build stuff
      *
      * 4 - exploring map for more soup
+     *
+     *
+     * For landscapers: //wip, should revise
+     * 1 - searching for HQ
+     * 2 - dumping dirt on HQ
      */
     
     
@@ -70,6 +76,7 @@ public strictfp class RobotPlayer {
         turnCount = 0;
         mapWidth = rc.getMapWidth();
         mapHeight = rc.getMapHeight();
+        numBuilt = 0;
         
         
         home = rc.getLocation();
@@ -151,7 +158,8 @@ public strictfp class RobotPlayer {
         }
         
         if (turnCount % 40 == 0) {
-            for (Direction dir : directions) tryBuild(RobotType.MINER, dir);
+            numBuilt++;
+            for (Direction dir : directions) { tryBuild(RobotType.MINER, dir);  }
         }
         
     }
@@ -186,7 +194,9 @@ public strictfp class RobotPlayer {
         if (state == 1) {
             for (Direction dir : allDirs) {
                 if (rc.canMineSoup(dir)) {
+                    destination = rc.adjacentLocation(dir);
                     state = 2;
+                    break;
                 }
             }
             
@@ -228,7 +238,7 @@ public strictfp class RobotPlayer {
         
         if (state == 3) {
             
-            if (rc.getLocation().distanceSquaredTo(home) < 10) {
+            if (rc.getLocation().distanceSquaredTo(home) < 12) {
                 RobotInfo[] robots = rc.senseNearbyRobots();
                 boolean designExists = false;
                 boolean fulfillExists = false;
@@ -244,7 +254,7 @@ public strictfp class RobotPlayer {
                     }
                 }
     
-                if (!designExists) {
+                if (!fulfillExists) {
                     for (Direction dir : directions) {
                         if (rc.canBuildRobot(RobotType.FULFILLMENT_CENTER, dir) && rc.getTeamSoup() > 150) {
                             rc.buildRobot(RobotType.FULFILLMENT_CENTER, dir);
@@ -317,19 +327,92 @@ public strictfp class RobotPlayer {
     }
 
     static void runDesignSchool() throws GameActionException {
+        
+        if (rc.getTeamSoup() > 500 && numBuilt < 10) {
+            numBuilt++;
+            for (Direction dir : directions) {
+                tryBuild(RobotType.LANDSCAPER, dir);
+            }
+        }
 
     }
 
     static void runFulfillmentCenter() throws GameActionException {
-        for (Direction dir : directions)
-            tryBuild(RobotType.DELIVERY_DRONE, dir);
+        
+        if (rc.getTeamSoup() > 500 && numBuilt < 10) {
+            numBuilt++;
+            for (Direction dir : directions) {
+                tryBuild(RobotType.DELIVERY_DRONE, dir);
+            }
+        }
+
     }
 
     static void runLandscaper() throws GameActionException {
+        System.out.println("DESTINATION " + destination);
+        System.out.println("STATE " + state);
     
+        if (turnCount == 1) {
+            int quadrant = findQuadrant(rc.getLocation());
+            if (quadrant == 1) destination = new MapLocation(0, 0);
+            if (quadrant == 2) destination = new MapLocation(mapWidth - 1, 0);
+            if (quadrant == 3) destination = new MapLocation(mapWidth - 1, mapHeight - 1);
+            if (quadrant == 4) destination = new MapLocation(0, mapHeight - 1);
+            
+            state = 1;
+        }
+        
+        
+        if (state == 1) {
+            Team enemy = rc.getTeam().opponent();
+            RobotInfo[] robots = rc.senseNearbyRobots(-1, enemy);
+            for (RobotInfo robot : robots) {
+                if (robot.getType().isBuilding()) {
+                    destination = robot.getLocation();
+                    state = 2;
+                    break;
+                }
+            }
+            
+            tryMovingTowards(destination);
+        }
+    
+        if (state == 2) {
+            if (rc.getLocation().isAdjacentTo(destination)) {
+                Direction dumpDirtDir = rc.getLocation().directionTo(destination);
+                if (rc.canDepositDirt(dumpDirtDir)) rc.depositDirt(dumpDirtDir);
+                else {
+                    for (Direction dir : directions) {
+                        if (rc.canDigDirt(dir)) {
+                            rc.digDirt(dir);
+                        }
+                    }
+                }
+            }
+            else tryMovingTowards(destination);
+        }
+    
+        // Constantly grab some dirt from surroundings, and grab dirt if dumping dirt on a building
+        if (turnCount % 15 == 0 || state == 2) {
+            for (Direction dir : directions) {
+                if (rc.canDigDirt(dir)) {
+                    rc.digDirt(dir);
+                }
+            }
+        }
     }
 
     static void runDeliveryDrone() throws GameActionException {
+        System.out.println("DESTINATION " + destination);
+        
+        if (turnCount == 1) {
+            int quadrant = findQuadrant(rc.getLocation());
+            if (quadrant == 1) destination = new MapLocation(0, 0);
+            if (quadrant == 2) destination = new MapLocation(mapWidth - 1, 0);
+            if (quadrant == 3) destination = new MapLocation(mapWidth - 1, mapHeight - 1);
+            if (quadrant == 4) destination = new MapLocation(0, mapHeight - 1);
+        }
+        
         Team enemy = rc.getTeam().opponent();
         if (!rc.isCurrentlyHoldingUnit()) {
             // See if there are any enemy robots within striking range (distance 1 from lumberjack's radius)
@@ -340,8 +423,24 @@ public strictfp class RobotPlayer {
                 rc.pickUpUnit(robots[0].getID());
                 System.out.println("I picked up " + robots[0].getID() + "!");
             }
+
+            RobotInfo[] nearbyRobots = rc.senseNearbyRobots(-1, enemy);
+            System.out.println("ENEMY ROBOTS NEARBY " + nearbyRobots.length);
+            if (nearbyRobots.length > 0) {
+                for (RobotInfo r : nearbyRobots) {
+                    if (!r.getType().isBuilding()) destination = nearbyRobots[0].getLocation();
+                }
+                
+            }
+            
+            else {
+                System.out.println("DRONE SEARCHING");
+                droneTryMovingTowards(destination);
+            }
         } else {
-            // No close robots, so search for robots within sight radius - removed
+            // If holding unit, do something
+
+            
             
         }
     }
@@ -366,9 +465,12 @@ public strictfp class RobotPlayer {
         
         else {
             System.out.println("BLOCKED");
+            Direction left = dirToMove;
+            Direction right = dirToMove;
+            
             for (int i = 0; i < 4; i++) {
-                Direction left = dirToMove.rotateLeft();
-                Direction right = dirToMove.rotateRight();
+                left = left.rotateLeft();
+                right = right.rotateRight();
     
                 MapLocation nextLeft = rc.adjacentLocation(left);
                 MapLocation nextRight = rc.adjacentLocation(right);
@@ -378,7 +480,7 @@ public strictfp class RobotPlayer {
                     rc.move(left);
                 }
                 if (rc.canMove(right) && !rc.senseFlooding(nextRight)) {
-                    rc.move(left);
+                    rc.move(right);
                 }
             }
             
@@ -389,6 +491,48 @@ public strictfp class RobotPlayer {
         
         return true;
     
+    }
+    
+    // Will end the turn
+    // If tile to move is occupied, tries going left a little, then right a little
+    static boolean droneTryMovingTowards(MapLocation goal) throws GameActionException {
+        
+        Direction dirToMove = rc.getLocation().directionTo(goal);
+        MapLocation nextStep = rc.adjacentLocation(dirToMove);
+        
+        
+        if (rc.canMove(dirToMove)) {
+            rc.move(dirToMove);
+        }
+        
+        else {
+            System.out.println("BLOCKED");
+            Direction left = dirToMove;
+            Direction right = dirToMove;
+            
+            for (int i = 0; i < 4; i++) {
+                left = left.rotateLeft();
+                right = right.rotateRight();
+                
+                MapLocation nextLeft = rc.adjacentLocation(left);
+                MapLocation nextRight = rc.adjacentLocation(right);
+                
+                
+                if (rc.canMove(left)) {
+                    rc.move(left);
+                }
+                if (rc.canMove(right)) {
+                    rc.move(right);
+                }
+            }
+            
+            // If no valid moves are found
+            return false;
+            
+        }
+        
+        return true;
+        
     }
     
     
