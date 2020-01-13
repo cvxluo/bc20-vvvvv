@@ -39,6 +39,8 @@ public strictfp class RobotPlayer {
     static MapLocation home;
     static int numBuilt;
     
+    static boolean[] explored;
+    static int beingBlocked;
     
     static int state;
     /**
@@ -56,6 +58,9 @@ public strictfp class RobotPlayer {
      * For landscapers: //wip, should revise
      * 1 - searching for HQ
      * 2 - dumping dirt on HQ
+     *
+     * 3 - defensive landscaper
+     * 4 - looking if defense is needed
      */
     
     
@@ -81,8 +86,9 @@ public strictfp class RobotPlayer {
         
         home = rc.getLocation();
         
-        
         state = 0;
+        explored = new boolean[5];
+        beingBlocked = 0;
 
         System.out.println("I'm a " + rc.getType() + " and I just got created at " + rc.getLocation());
         while (true) {
@@ -115,10 +121,10 @@ public strictfp class RobotPlayer {
     }
 
     static void runHQ() throws GameActionException {
-        
         if (turnCount == 1) {
             
             // TODO: Optimize this
+            /*
             LinkedList<MapLocation> soups = new LinkedList<MapLocation>();
             for (int x = 0; x < mapWidth; x++) {
                 for (int y = 0; y < mapHeight; y++) {
@@ -128,13 +134,26 @@ public strictfp class RobotPlayer {
                     }
                 }
             }
+            */
+            
+            // kinda bad also should optimize
+            MapLocation soupLocation = new MapLocation(-1, -1);
+            MapLocation home = rc.getLocation();
+            for (int x = -7; x < 7; x++) {
+                for (int y = -7; y < 7; y++) {
+                    MapLocation loc = home.translate(x, y);
+                    if (rc.canSenseLocation(loc)) {
+                        if (rc.senseSoup(loc) != 0) { soupLocation = loc; break; }
+                    }
+                }
+            }
 
-            System.out.println("SOUPS " + soups);
+            System.out.println("SOUP " + soupLocation);
             int[] message = new int[7];
             message[0] = 1234567; // Identifier
             // TODO: order soups from closest to farthest
-            if (soups.size() > 0) {
-                MapLocation soup1 = soups.pop();
+            if (soupLocation.x != -1) { // (soups.size() > 0) {
+                MapLocation soup1 = soupLocation; // soups.pop();
                 message[1] = soup1.x;
                 message[2] = soup1.y;
                 
@@ -151,15 +170,30 @@ public strictfp class RobotPlayer {
             message[5] = 341234;
             message[6] = rc.getID();
             
-            if (rc.canSubmitTransaction(message, 20)) {
-                rc.submitTransaction(message, 20);
+            if (rc.canSubmitTransaction(message, 30)) {
+                rc.submitTransaction(message, 30);
                 System.out.println("SUCCESSFULLY SUBMITTED TRANSACTION");
             }
         }
         
-        if (turnCount % 40 == 0) {
-            numBuilt++;
-            for (Direction dir : directions) { tryBuild(RobotType.MINER, dir);  }
+        // Shoot down any drones if seen
+        RobotInfo[] robots = rc.senseNearbyRobots(-1, enemy);
+        for (RobotInfo robot : robots) {
+            if (robot.getType() == RobotType.DELIVERY_DRONE) {
+                int id = robot.getID();
+                if (rc.canShootUnit(id)) {
+                    rc.shootUnit(id);
+                }
+            }
+        }
+        
+        if ((turnCount % 40 == 0 || turnCount < 20) && turnCount < 250) {
+            for (Direction dir : directions) {
+                if (rc.canBuildRobot(RobotType.MINER, dir)) {
+                    numBuilt++;
+                    rc.buildRobot(RobotType.MINER, dir);
+                }
+            }
         }
         
     }
@@ -174,7 +208,7 @@ public strictfp class RobotPlayer {
         if (turnCount == 1) { // Setup stuff
             boolean foundSoupBlock = false;
             int[] message = new int[7];
-            int blockCheck = 2;
+            int blockCheck = 1;
     
             while (!foundSoupBlock) {
                 System.out.println("USING BLOCK " + blockCheck);
@@ -189,6 +223,9 @@ public strictfp class RobotPlayer {
             destination = soupLocation;
             
             state = 1;
+            
+            int quadrant = findQuadrant(rc.getLocation());
+            explored[quadrant] = true;
         }
         
         if (state == 1) {
@@ -238,17 +275,23 @@ public strictfp class RobotPlayer {
         
         if (state == 3) {
             
-            if (rc.getLocation().distanceSquaredTo(home) < 12) {
+            if (rc.getLocation().distanceSquaredTo(home) < 20 && rc.getLocation().distanceSquaredTo(home) > 10) {
                 RobotInfo[] robots = rc.senseNearbyRobots();
                 boolean designExists = false;
                 boolean fulfillExists = false;
+                boolean refineryExists = false;
+                boolean netgunExists = false;
+                
+                RobotInfo refinery = new RobotInfo(1, rc.getTeam(), RobotType.REFINERY, rc.getLocation()); //very bad
                 for (RobotInfo robot : robots) {
                     if (robot.getType() == RobotType.DESIGN_SCHOOL) designExists = true;
                     if (robot.getType() == RobotType.FULFILLMENT_CENTER) fulfillExists = true;
+                    if (robot.getType() == RobotType.REFINERY) { refineryExists = true; refinery = robot; }
+                    if (robot.getType() == RobotType.NET_GUN) netgunExists = true;
                 }
                 if (!designExists) {
                     for (Direction dir : directions) {
-                        if (rc.canBuildRobot(RobotType.DESIGN_SCHOOL, dir) && rc.getTeamSoup() > 150) {
+                        if (rc.canBuildRobot(RobotType.DESIGN_SCHOOL, dir) && rc.getTeamSoup() > 250) {
                             rc.buildRobot(RobotType.DESIGN_SCHOOL, dir);
                         }
                     }
@@ -256,10 +299,29 @@ public strictfp class RobotPlayer {
     
                 if (!fulfillExists) {
                     for (Direction dir : directions) {
-                        if (rc.canBuildRobot(RobotType.FULFILLMENT_CENTER, dir) && rc.getTeamSoup() > 150) {
+                        if (rc.canBuildRobot(RobotType.FULFILLMENT_CENTER, dir) && rc.getTeamSoup() > 300) {
                             rc.buildRobot(RobotType.FULFILLMENT_CENTER, dir);
                         }
                     }
+                }
+    
+                if (!netgunExists) {
+                    for (Direction dir : directions) {
+                        if (rc.canBuildRobot(RobotType.NET_GUN, dir) && rc.getTeamSoup() > 400) {
+                            rc.buildRobot(RobotType.NET_GUN, dir);
+                        }
+                    }
+                }
+    
+                if (!refineryExists) {
+                    for (Direction dir : directions) {
+                        if (rc.canBuildRobot(RobotType.REFINERY, dir) && rc.getTeamSoup() > 300) {
+                            rc.buildRobot(RobotType.REFINERY, dir);
+                        }
+                    }
+                }
+                else {
+                    destination = refinery.getLocation();
                 }
             }
             
@@ -276,6 +338,7 @@ public strictfp class RobotPlayer {
         }
         
         if (state == 4) {
+            /*
             boolean foundSoup = false;
             for (int x = 0; x < mapWidth; x++) {
                 for (int y = 0; y < mapHeight; y++) {
@@ -289,13 +352,47 @@ public strictfp class RobotPlayer {
                     }
                 }
             }
+            */
     
+            boolean foundSoup = false;
+            MapLocation soupLocation = new MapLocation(-1, -1);
+            MapLocation me = rc.getLocation();
+            for (int x = -7; x < 7; x++) {
+                for (int y = -7; y < 7; y++) {
+                    MapLocation loc = new MapLocation(me.x + x, me.y + y);
+                    if (rc.canSenseLocation(loc)) {
+                        if (rc.senseSoup(loc) != 0) { soupLocation = loc; foundSoup = true; break; }
+                    }
+                }
+            }
+            
             if (!foundSoup) {
+                
+                System.out.println("EXPLROED");
+                for (int i = 0; i < 5; i++) {
+                    System.out.print(explored[i] + " ");
+                }
+                System.out.println();
+                
                 int quadrant = findQuadrant(rc.getLocation());
-                if (quadrant == 1) destination = new MapLocation(0, 0);
-                if (quadrant == 2) destination = new MapLocation(mapWidth - 1, 0);
-                if (quadrant == 3) destination = new MapLocation(mapWidth - 1, mapHeight - 1);
-                if (quadrant == 4) destination = new MapLocation(0, mapHeight - 1);
+                if (!explored[quadrant]) {
+                    explored[quadrant] = true;
+                }
+                int nextQ = 0;
+                boolean foundNextQ = false;
+                for (int i = 1; i < 5; i++) {
+                    if (!explored[i]) { nextQ = i; foundNextQ = true; break; }
+                }
+                System.out.println("NEXT Q " + nextQ);
+                if (!foundNextQ) { explored = new boolean[5]; nextQ = quadrant; }
+                if (nextQ == 3) destination = new MapLocation(0, 0);
+                if (nextQ == 4) destination = new MapLocation(mapWidth - 1, 0);
+                if (nextQ == 1) destination = new MapLocation(mapWidth - 1, mapHeight - 1);
+                if (nextQ == 2) destination = new MapLocation(0, mapHeight - 1);
+            }
+            
+            else {
+                destination = soupLocation;
             }
             
             state = 1;
@@ -353,18 +450,28 @@ public strictfp class RobotPlayer {
         System.out.println("STATE " + state);
     
         if (turnCount == 1) {
-            int quadrant = findQuadrant(rc.getLocation());
-            if (quadrant == 1) destination = new MapLocation(0, 0);
-            if (quadrant == 2) destination = new MapLocation(mapWidth - 1, 0);
-            if (quadrant == 3) destination = new MapLocation(mapWidth - 1, mapHeight - 1);
-            if (quadrant == 4) destination = new MapLocation(0, mapHeight - 1);
+    
+            boolean foundSoupBlock = false;
+            int[] message = new int[7];
+            int blockCheck = 1;
+    
+            while (!foundSoupBlock) {
+                System.out.println("USING BLOCK " + blockCheck);
+                Transaction[] block = rc.getBlock(blockCheck);
+                blockCheck++;
+                for (Transaction transaction : block) {
+                    int[] m = transaction.getMessage();
+                    if (m[0] == 1234567) { message = m; foundSoupBlock = true; break; }
+                }
+            }
+            MapLocation hqLocation = new MapLocation(message[3], message[4]);
+            home = hqLocation;
             
-            state = 1;
+            state = 4;
         }
         
         
         if (state == 1) {
-            Team enemy = rc.getTeam().opponent();
             RobotInfo[] robots = rc.senseNearbyRobots(-1, enemy);
             for (RobotInfo robot : robots) {
                 if (robot.getType().isBuilding()) {
@@ -391,6 +498,65 @@ public strictfp class RobotPlayer {
             }
             else tryMovingTowards(destination);
         }
+        
+        
+        if (state == 3) {
+            int numDefenseLandscapers = 0;
+            if (rc.canSenseLocation(home) && rc.getLocation().distanceSquaredTo(home) < 6) {
+                RobotInfo[] nearbyRobots = rc.senseNearbyRobots(-1, rc.getTeam());
+                for (RobotInfo robot : nearbyRobots) {
+                    if (robot.getType() == RobotType.LANDSCAPER) {
+                        numDefenseLandscapers++;
+                    }
+                }
+            }
+    
+            System.out.println(numDefenseLandscapers);
+            if (numDefenseLandscapers > 8) {
+                state = 4;
+            }
+            
+            if (!rc.getLocation().isAdjacentTo(home)) tryMovingTowards(home);
+            else {
+                Direction hqDir = rc.getLocation().directionTo(home);
+                Direction dirtDir = hqDir.opposite();
+                if (rc.canDepositDirt(Direction.CENTER)) rc.depositDirt(Direction.CENTER);
+                if (rc.canDigDirt(dirtDir)) rc.digDirt(dirtDir);
+            }
+        }
+        
+        if (state == 4) {
+    
+            int numDefenseLandscapers = 0;
+            if (rc.canSenseLocation(home) && rc.getLocation().distanceSquaredTo(home) < 6) {
+                RobotInfo[] nearbyRobots = rc.senseNearbyRobots(-1, rc.getTeam());
+                for (RobotInfo robot : nearbyRobots) {
+                    if (robot.getType() == RobotType.LANDSCAPER) {
+                        numDefenseLandscapers++;
+                    }
+                }
+            }
+            
+            else {
+                tryMovingTowards(home);
+            }
+            
+            System.out.println(numDefenseLandscapers);
+            if (numDefenseLandscapers < 8) {
+                state = 3;
+            }
+    
+            else {
+                int quadrant = findQuadrant(rc.getLocation());
+                if (quadrant == 1) destination = new MapLocation(0, 0);
+                if (quadrant == 2) destination = new MapLocation(mapWidth - 1, 0);
+                if (quadrant == 3) destination = new MapLocation(mapWidth - 1, mapHeight - 1);
+                if (quadrant == 4) destination = new MapLocation(0, mapHeight - 1);
+        
+                state = 1;
+            }
+            
+        }
     
         // Constantly grab some dirt from surroundings, and grab dirt if dumping dirt on a building
         if (turnCount % 15 == 0 || state == 2) {
@@ -406,14 +572,30 @@ public strictfp class RobotPlayer {
         System.out.println("DESTINATION " + destination);
         
         if (turnCount == 1) {
+            /*
             int quadrant = findQuadrant(rc.getLocation());
             if (quadrant == 1) destination = new MapLocation(0, 0);
             if (quadrant == 2) destination = new MapLocation(mapWidth - 1, 0);
             if (quadrant == 3) destination = new MapLocation(mapWidth - 1, mapHeight - 1);
             if (quadrant == 4) destination = new MapLocation(0, mapHeight - 1);
+            */
+            int quadrant = findQuadrant(rc.getLocation());
+            if (!explored[quadrant]) {
+                explored[quadrant] = true;
+            }
+            int nextQ = 0;
+            boolean foundNextQ = false;
+            for (int i = 1; i < 5; i++) {
+                if (!explored[i]) { nextQ = i; foundNextQ = true; break; }
+            }
+            System.out.println("NEXT Q " + nextQ);
+            if (!foundNextQ) { explored = new boolean[5]; nextQ = quadrant; }
+            if (nextQ == 3) destination = new MapLocation(0, 0);
+            if (nextQ == 4) destination = new MapLocation(mapWidth - 1, 0);
+            if (nextQ == 1) destination = new MapLocation(mapWidth - 1, mapHeight - 1);
+            if (nextQ == 2) destination = new MapLocation(0, mapHeight - 1);
         }
         
-        Team enemy = rc.getTeam().opponent();
         if (!rc.isCurrentlyHoldingUnit()) {
             // See if there are any enemy robots within striking range (distance 1 from lumberjack's radius)
             RobotInfo[] robots = rc.senseNearbyRobots(GameConstants.DELIVERY_DRONE_PICKUP_RADIUS_SQUARED, enemy);
@@ -435,18 +617,98 @@ public strictfp class RobotPlayer {
             
             else {
                 System.out.println("DRONE SEARCHING");
+    
+                int quadrant = findQuadrant(rc.getLocation());
+                if (!explored[quadrant]) {
+                    explored[quadrant] = true;
+                }
+                int nextQ = 0;
+                boolean foundNextQ = false;
+                for (int i = 1; i < 5; i++) {
+                    if (!explored[i]) { nextQ = i; foundNextQ = true; break; }
+                }
+                System.out.println("NEXT Q " + nextQ);
+                if (!foundNextQ) { explored = new boolean[5]; nextQ = quadrant; }
+                if (nextQ == 3) destination = new MapLocation(0, 0);
+                if (nextQ == 4) destination = new MapLocation(mapWidth - 1, 0);
+                if (nextQ == 1) destination = new MapLocation(mapWidth - 1, mapHeight - 1);
+                if (nextQ == 2) destination = new MapLocation(0, mapHeight - 1);
+                
+                
                 droneTryMovingTowards(destination);
             }
         } else {
             // If holding unit, do something
+    
+    
+            for (int x = -1; x < 1; x++) {
+                for (int y = -1; y < 1; y++) {
+                    MapLocation loc = home.translate(x, y);
+                    if (rc.canSenseLocation(loc)) {
+                        if (rc.senseFlooding(loc)) {
+                            Direction dropDir = rc.getLocation().directionTo(loc);
+                            if (rc.canDropUnit(dropDir)) rc.dropUnit(dropDir);
+                        }
+                    }
+                }
+            }
+    
+            // kinda bad also should optimize
+            boolean foundFlood = false;
+            MapLocation floodLocation = new MapLocation(-1, -1);
+            MapLocation home = rc.getLocation();
+            for (int x = -5; x < 5; x++) {
+                for (int y = -5; y < 5; y++) {
+                    MapLocation loc = home.translate(x, y);
+                    if (rc.canSenseLocation(loc)) {
+                        if (rc.senseFlooding(loc)) {
+                            destination = loc;
+                            foundFlood = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            System.out.println("HAVE FOUND FLOOD TO DROP");
+            System.out.println("FLOOD AT  " + destination);
+            
+            if (!foundFlood) {
+                int quadrant = findQuadrant(rc.getLocation());
+                if (!explored[quadrant]) {
+                    explored[quadrant] = true;
+                }
+                int nextQ = 0;
+                boolean foundNextQ = false;
+                for (int i = 1; i < 5; i++) {
+                    if (!explored[i]) { nextQ = i; foundNextQ = true; break; }
+                }
+                System.out.println("NEXT Q " + nextQ);
+                if (!foundNextQ) { explored = new boolean[5]; nextQ = quadrant; }
+                if (nextQ == 3) destination = new MapLocation(0, 0);
+                if (nextQ == 4) destination = new MapLocation(mapWidth - 1, 0);
+                if (nextQ == 1) destination = new MapLocation(mapWidth - 1, mapHeight - 1);
+                if (nextQ == 2) destination = new MapLocation(0, mapHeight - 1);
+            }
 
-            
-            
+    
+            tryMovingTowards(destination);
+    
+    
         }
     }
 
     static void runNetGun() throws GameActionException {
-
+        // Shoot down any drones if seen
+        RobotInfo[] robots = rc.senseNearbyRobots(-1, enemy);
+        for (RobotInfo robot : robots) {
+            if (robot.getType() == RobotType.DELIVERY_DRONE) {
+                int id = robot.getID();
+                if (rc.canShootUnit(id)) {
+                    rc.shootUnit(id);
+                }
+            }
+        }
     }
     
     
@@ -460,29 +722,64 @@ public strictfp class RobotPlayer {
 
         
         if (rc.canMove(dirToMove) && !rc.senseFlooding(nextStep)) {
+            beingBlocked = 0;
             rc.move(dirToMove);
         }
         
         else {
+            
             System.out.println("BLOCKED");
+            System.out.println(beingBlocked);
             Direction left = dirToMove;
             Direction right = dirToMove;
             
-            for (int i = 0; i < 4; i++) {
-                left = left.rotateLeft();
-                right = right.rotateRight();
-    
-                MapLocation nextLeft = rc.adjacentLocation(left);
-                MapLocation nextRight = rc.adjacentLocation(right);
-    
-    
-                if (rc.canMove(left) && !rc.senseFlooding(nextLeft)) {
-                    rc.move(left);
-                }
-                if (rc.canMove(right) && !rc.senseFlooding(nextRight)) {
-                    rc.move(right);
+            if (beingBlocked == 1) {
+                // Only move left if being blocked
+                for (int i = 0; i < 4; i++) {
+                    left = left.rotateLeft();
+        
+                    MapLocation nextLeft = rc.adjacentLocation(left);
+                    
+                    if (rc.canMove(left) && !rc.senseFlooding(nextLeft)) {
+                        rc.move(left);
+                    }
                 }
             }
+            
+            else if (beingBlocked == 2) {
+                for (int i = 0; i < 4; i++) {
+                    right = right.rotateLeft();
+        
+                    MapLocation nextRight = rc.adjacentLocation(right);
+        
+                    if (rc.canMove(right) && !rc.senseFlooding(nextRight)) {
+                        rc.move(right);
+                    }
+                }
+            }
+            
+            else {
+                
+                for (int i = 0; i < 4; i++) {
+                    left = left.rotateLeft();
+                    right = right.rotateRight();
+        
+                    MapLocation nextLeft = rc.adjacentLocation(left);
+                    MapLocation nextRight = rc.adjacentLocation(right);
+        
+        
+                    if (rc.canMove(left) && !rc.senseFlooding(nextLeft)) {
+                        beingBlocked = 1;
+                        rc.move(left);
+                    }
+                    if (rc.canMove(right) && !rc.senseFlooding(nextRight)) {
+                        beingBlocked = 2;
+                        rc.move(right);
+                    }
+                }
+            }
+            
+            
             
             // If no valid moves are found
             return false;
