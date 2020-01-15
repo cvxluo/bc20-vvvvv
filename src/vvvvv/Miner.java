@@ -11,19 +11,8 @@ public strictfp class Miner extends RobotPlayer {
         
         
         if (turnCount == 1) { // Setup stuff
-            boolean foundSoupBlock = false;
-            int[] message = new int[7];
-            int blockCheck = 1;
             
-            while (!foundSoupBlock) {
-                System.out.println("USING BLOCK " + blockCheck);
-                Transaction[] block = rc.getBlock(blockCheck);
-                blockCheck++;
-                for (Transaction transaction : block) {
-                    int[] m = transaction.getMessage();
-                    if (m[5] == 7654321) { message = m; foundSoupBlock = true; break; }
-                }
-            }
+            int[] message = findFirstMessageByContent(7654321, 5); // Guarenteed that this first block will exist
             MapLocation soupLocation = new MapLocation(message[1], message[2]);
             destination = soupLocation;
             
@@ -80,14 +69,14 @@ public strictfp class Miner extends RobotPlayer {
         
         if (state == 3) {
             
-            if (rc.getLocation().distanceSquaredTo(home) < 20 && rc.getLocation().distanceSquaredTo(home) > 10) {
+            if (currentLocation.distanceSquaredTo(home) < 20 && currentLocation.distanceSquaredTo(home) > 10) {
                 RobotInfo[] robots = rc.senseNearbyRobots();
                 boolean designExists = false;
                 boolean fulfillExists = false;
                 boolean refineryExists = false;
                 boolean netgunExists = false;
                 
-                RobotInfo refinery = new RobotInfo(1, rc.getTeam(), RobotType.REFINERY, rc.getLocation()); //very bad
+                RobotInfo refinery = new RobotInfo(1, rc.getTeam(), RobotType.REFINERY, currentLocation); //very bad
                 for (RobotInfo robot : robots) {
                     if (robot.getType() == RobotType.DESIGN_SCHOOL) designExists = true;
                     if (robot.getType() == RobotType.FULFILLMENT_CENTER) fulfillExists = true;
@@ -112,7 +101,7 @@ public strictfp class Miner extends RobotPlayer {
                 
                 if (!netgunExists) {
                     for (Direction dir : directions) {
-                        if (rc.canBuildRobot(RobotType.NET_GUN, dir) && rc.getTeamSoup() > 400) {
+                        if (rc.canBuildRobot(RobotType.NET_GUN, dir) && rc.getTeamSoup() > 500) {
                             rc.buildRobot(RobotType.NET_GUN, dir);
                         }
                     }
@@ -161,7 +150,7 @@ public strictfp class Miner extends RobotPlayer {
             
             boolean foundSoup = false;
             MapLocation soupLocation = new MapLocation(-1, -1);
-            MapLocation me = rc.getLocation();
+            MapLocation me = currentLocation;
             for (int x = -7; x < 7; x++) {
                 for (int y = -7; y < 7; y++) {
                     MapLocation loc = new MapLocation(me.x + x, me.y + y);
@@ -179,10 +168,8 @@ public strictfp class Miner extends RobotPlayer {
                 }
                 System.out.println();
                 
-                int quadrant = findQuadrant(rc.getLocation());
-                if (!explored[quadrant]) {
-                    explored[quadrant] = true;
-                }
+                int quadrant = findQuadrant(currentLocation);
+                explored[quadrant] = true;
                 int nextQ = 0;
                 boolean foundNextQ = false;
                 for (int i = 1; i < 5; i++) {

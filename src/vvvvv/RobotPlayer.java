@@ -39,6 +39,7 @@ public strictfp class RobotPlayer {
     static MapLocation home;
     static int numBuilt;
     
+    static MapLocation currentLocation;
     static boolean[] explored;
     static int beingBlocked;
     
@@ -98,6 +99,9 @@ public strictfp class RobotPlayer {
                 // Here, we've separated the controls into a different method for each RobotType.
                 // You can add the missing ones or rewrite this into your own control structure.
                 System.out.println("I'm a " + rc.getType() + "! Location " + rc.getLocation());
+                
+                currentLocation = rc.getLocation();
+                
                 switch (rc.getType()) {
                     case HQ:                 HQ.runHQ();                               break;
                     case MINER:              Miner.runMiner();                         break;
@@ -250,6 +254,41 @@ public strictfp class RobotPlayer {
     
     }
     
+    // Find first message by its contents
+    static int[] findFirstMessageByContent(int check, int index) throws GameActionException {
+        
+        for (int i = 1; i < rc.getRoundNum() - 1; i++) {
+            Transaction[] block = rc.getBlock(i);
+            
+            for (Transaction t : block) {
+                int[] message = t.getMessage();
+                if (message[index] == check) {
+                    return message;
+                }
+            }
+        }
+        
+        return new int[7];
+        
+    }
+    
+    // Find last message by its contents
+    static int[] findLastMessageByContent(int check, int index) throws GameActionException {
+        
+        for (int i = rc.getRoundNum() - 1; i >= 0; i--) {
+            Transaction[] block = rc.getBlock(i);
+    
+            for (Transaction t : block) {
+                int[] message = t.getMessage();
+                if (message[index] == check) {
+                    return message;
+                }
+            }
+        }
+        
+        return new int[7];
+        
+    }
     
     // Standard quadrant system
     static int findQuadrant(MapLocation here) {
@@ -265,9 +304,7 @@ public strictfp class RobotPlayer {
     
     
     // Hashing function for communication
-    static int hash (int h) {
-        return (h * 31) << 15;
-    }
+    static int hash (int h) { return (h * 31) % 65436; }
     
     static int getElevation() {
         double E = 2.718281828459045;

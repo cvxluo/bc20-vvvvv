@@ -22,33 +22,43 @@ public strictfp class Landscaper extends RobotPlayer {
         
         if (turnCount == 1) {
             
-            boolean foundSoupBlock = false;
-            int[] message = new int[7];
-            int blockCheck = 1;
+            int[] message = findFirstMessageByContent(7654321, 5);
             
-            while (!foundSoupBlock) {
-                System.out.println("USING BLOCK " + blockCheck);
-                Transaction[] block = rc.getBlock(blockCheck);
-                blockCheck++;
-                for (Transaction transaction : block) {
-                    int[] m = transaction.getMessage();
-                    if (m[5] == 7654321) { message = m; foundSoupBlock = true; break; }
-                }
-            }
             MapLocation hqLocation = new MapLocation(message[3], message[4]);
             home = hqLocation;
+            destination = hqLocation;
             
             state = 4;
         }
         
         
         if (state == 1) {
-            RobotInfo[] robots = rc.senseNearbyRobots(-1, enemy);
-            for (RobotInfo robot : robots) {
-                if (robot.getType().isBuilding()) {
-                    destination = robot.getLocation();
-                    state = 2;
-                    break;
+    
+            if (rc.canSenseLocation(destination)) {
+                int quadrant = findQuadrant(rc.getLocation());
+                if (!explored[quadrant]) {
+                    explored[quadrant] = true;
+                }
+                int nextQ = 0;
+                boolean foundNextQ = false;
+                for (int i = 1; i < 5; i++) {
+                    if (!explored[i]) { nextQ = i; foundNextQ = true; break; }
+                }
+                System.out.println("NEXT Q " + nextQ);
+                if (!foundNextQ) { explored = new boolean[5]; nextQ = quadrant; }
+                if (nextQ == 3) destination = new MapLocation(0, 0);
+                if (nextQ == 4) destination = new MapLocation(mapWidth - 1, 0);
+                if (nextQ == 1) destination = new MapLocation(mapWidth - 1, mapHeight - 1);
+                if (nextQ == 2) destination = new MapLocation(0, mapHeight - 1);
+    
+    
+                RobotInfo[] robots = rc.senseNearbyRobots(-1, enemy);
+                for (RobotInfo robot : robots) {
+                    if (robot.getType().isBuilding()) {
+                        destination = robot.getLocation();
+                        state = 2;
+                        break;
+                    }
                 }
             }
             
@@ -84,17 +94,24 @@ public strictfp class Landscaper extends RobotPlayer {
                 }
             }
             
+            int numDefensiveSpaces = 0;
+            for (Direction dir : directions) {
+                MapLocation testSpace = home.add(dir);
+                if (testSpace.x >= 0 && testSpace.y >= 0 && testSpace.x < rc.getMapWidth() && testSpace.y < rc.getMapHeight()) {
+                    numDefensiveSpaces++;
+                }
+            }
             System.out.println(numDefenseLandscapers);
-            if (numDefenseLandscapers >= 8) {
-                state = 4;
+            if (numDefenseLandscapers >= numDefensiveSpaces) {
+                state = 1;
             }
             
-            if (!rc.getLocation().isAdjacentTo(home)) tryMovingTowards(home);
+            if (!currentLocation.isAdjacentTo(home)) tryMovingTowards(home);
             else {
-                Direction hqDir = rc.getLocation().directionTo(home);
+                Direction hqDir = currentLocation.directionTo(home);
                 Direction dirtDir = hqDir.opposite();
                 for (Direction dir : directions) {
-                    if (!rc.getLocation().add(dir).isAdjacentTo(home) && rc.canDigDirt(dir)) {
+                    if (!currentLocation.add(dir).isAdjacentTo(home) && rc.canDigDirt(dir)) {
                         dirtDir = dir;
                     }
                 }
@@ -108,7 +125,7 @@ public strictfp class Landscaper extends RobotPlayer {
         if (state == 4) {
             
             int numDefenseLandscapers = 0;
-            if (rc.canSenseLocation(home) && rc.getLocation().distanceSquaredTo(home) < 6) {
+            if (rc.canSenseLocation(home) && currentLocation.distanceSquaredTo(home) < 6) {
                 RobotInfo[] nearbyRobots = rc.senseNearbyRobots(-1, rc.getTeam());
                 for (RobotInfo robot : nearbyRobots) {
                     if (robot.getType() == RobotType.LANDSCAPER) {
@@ -127,11 +144,19 @@ public strictfp class Landscaper extends RobotPlayer {
             }
             
             else {
-                int quadrant = findQuadrant(rc.getLocation());
-                if (quadrant == 1) destination = new MapLocation(0, 0);
-                if (quadrant == 2) destination = new MapLocation(mapWidth - 1, 0);
-                if (quadrant == 3) destination = new MapLocation(mapWidth - 1, mapHeight - 1);
-                if (quadrant == 4) destination = new MapLocation(0, mapHeight - 1);
+                int quadrant = findQuadrant(currentLocation);
+                explored[quadrant] = true;
+                int nextQ = 0;
+                boolean foundNextQ = false;
+                for (int i = 1; i < 5; i++) {
+                    if (!explored[i]) { nextQ = i; foundNextQ = true; break; }
+                }
+                System.out.println("NEXT Q " + nextQ);
+                if (!foundNextQ) { explored = new boolean[5]; nextQ = quadrant; }
+                if (nextQ == 3) destination = new MapLocation(0, 0);
+                if (nextQ == 4) destination = new MapLocation(mapWidth - 1, 0);
+                if (nextQ == 1) destination = new MapLocation(mapWidth - 1, mapHeight - 1);
+                if (nextQ == 2) destination = new MapLocation(0, mapHeight - 1);
                 
                 state = 1;
             }

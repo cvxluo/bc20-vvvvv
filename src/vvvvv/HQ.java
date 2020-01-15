@@ -72,7 +72,7 @@ public strictfp class HQ extends RobotPlayer {
             }
         }
         
-        if ((turnCount % 40 == 0 || turnCount < 20) && turnCount < 250) {
+        if ((turnCount % 40 == 0 || turnCount < 20) && turnCount < 275) {
             for (Direction dir : directions) {
                 if (rc.canBuildRobot(RobotType.MINER, dir)) {
                     numBuilt++;
