@@ -8,7 +8,9 @@ public strictfp class DesignSchool extends RobotPlayer {
         if (rc.getTeamSoup() > 500 && numBuilt < 10) {
             numBuilt++;
             for (Direction dir : directions) {
-                tryBuild(RobotType.LANDSCAPER, dir);
+                if (rc.canBuildRobot(RobotType.LANDSCAPER, dir)) {
+                    rc.buildRobot(RobotType.LANDSCAPER, dir);
+                }
             }
         }
         

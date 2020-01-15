@@ -34,7 +34,8 @@ public strictfp class HQ extends RobotPlayer {
             
             System.out.println("SOUP " + soupLocation);
             int[] message = new int[7];
-            message[0] = 1234567; // Identifier
+            int generatedKey = (int) (Math.random() * Integer.MAX_VALUE);
+            message[0] = generatedKey; // Identifier
             // TODO: order soups from closest to farthest
             if (soupLocation.x != -1) { // (soups.size() > 0) {
                 MapLocation soup1 = soupLocation; // soups.pop();
@@ -51,7 +52,7 @@ public strictfp class HQ extends RobotPlayer {
             message[3] = rc.getLocation().x;
             message[4] = rc.getLocation().y;
             
-            message[5] = 341234;
+            message[5] = 7654321;
             message[6] = rc.getID();
             
             if (rc.canSubmitTransaction(message, 30)) {

@@ -15,6 +15,5 @@ General:
 - Improve miner exploration code
 - Bad building code for miners - just randomly set up stuff, should be around the base
 - Finish water elevation calculation function
-- Do something with units drone is holding
 - CONVERT DRONE AND LANDSCAPER CODE TO STATE BASED
 - Shoot down closest drones rather than just random

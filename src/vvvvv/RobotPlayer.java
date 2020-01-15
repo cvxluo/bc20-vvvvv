@@ -147,6 +147,7 @@ public strictfp class RobotPlayer {
                 // Only move left if being blocked
                 for (int i = 0; i < 4; i++) {
                     left = left.rotateLeft();
+                    System.out.println("TRYING " + left);
         
                     MapLocation nextLeft = rc.adjacentLocation(left);
                     
@@ -154,11 +155,14 @@ public strictfp class RobotPlayer {
                         rc.move(left);
                     }
                 }
+                
             }
             
             else if (beingBlocked == 2) {
                 for (int i = 0; i < 4; i++) {
-                    right = right.rotateLeft();
+                    right = right.rotateRight();
+                    
+                    System.out.println("TRYING " + right);
         
                     MapLocation nextRight = rc.adjacentLocation(right);
         
@@ -166,6 +170,7 @@ public strictfp class RobotPlayer {
                         rc.move(right);
                     }
                 }
+                
             }
             
             else {
@@ -208,40 +213,42 @@ public strictfp class RobotPlayer {
         MapLocation nextStep = rc.adjacentLocation(dirToMove);
         
         
-        if (rc.canMove(dirToMove)) {
-            rc.move(dirToMove);
-        }
-        
-        else {
-            System.out.println("BLOCKED");
-            Direction left = dirToMove;
-            Direction right = dirToMove;
-            
-            for (int i = 0; i < 4; i++) {
-                left = left.rotateLeft();
-                right = right.rotateRight();
-                
-                MapLocation nextLeft = rc.adjacentLocation(left);
-                MapLocation nextRight = rc.adjacentLocation(right);
-                
-                
-                if (rc.canMove(left)) {
-                    rc.move(left);
-                }
-                if (rc.canMove(right)) {
-                    rc.move(right);
-                }
+        if (rc.isReady()) {
+            if (rc.canMove(dirToMove)) {
+                rc.move(dirToMove);
             }
+    
+            else {
+                System.out.println("BLOCKED");
+                Direction left = dirToMove;
+                Direction right = dirToMove;
+        
+                for (int i = 0; i < 4; i++) {
+                    left = left.rotateLeft();
+                    right = right.rotateRight();
             
+                    MapLocation nextLeft = rc.adjacentLocation(left);
+                    MapLocation nextRight = rc.adjacentLocation(right);
+            
+            
+                    if (rc.canMove(left)) {
+                        rc.move(left);
+                    }
+                    if (rc.canMove(right)) {
+                        rc.move(right);
+                    }
+                }
+        
+            }
+    
             // If no valid moves are found
             return false;
-            
-        }
-        
-        return true;
-        
-    }
     
+        }
+    
+        return true;
+    
+    }
     
     
     // Standard quadrant system
@@ -256,26 +263,17 @@ public strictfp class RobotPlayer {
         }
     }
     
+    
+    // Hashing function for communication
+    static int hash (int h) {
+        return (h * 31) << 15;
+    }
+    
     static int getElevation() {
         double E = 2.718281828459045;
         int x = rc.getRoundNum();
         return 1;
         // return (int) (Math.exp(0.0028*x - 1.38*Math.sin(0.00157*x - 1.73) + 1.38*sin(-1.73)) - 1);
-    }
-
-    /**
-     * Attempts to build a given robot in a given direction.
-     *
-     * @param type The type of the robot to build
-     * @param dir The intended direction of movement
-     * @return true if a move was performed
-     * @throws GameActionException
-     */
-    static boolean tryBuild(RobotType type, Direction dir) throws GameActionException {
-        if (rc.isReady() && rc.canBuildRobot(type, dir)) {
-            rc.buildRobot(type, dir);
-            return true;
-        } else return false;
     }
     
 

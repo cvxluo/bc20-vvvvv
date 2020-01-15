@@ -1,6 +1,19 @@
 package vvvvv;
 import battlecode.common.*;
 
+/**
+ * State Indicators:
+ * 0 - just created
+ *
+ * For landscapers: //wip, should revise
+ * 1 - searching for HQ
+ * 2 - dumping dirt on HQ
+ *
+ * 3 - defensive landscaper
+ * 4 - looking if defense is needed
+ */
+
+
 public strictfp class Landscaper extends RobotPlayer {
     
     static void runLandscaper() throws GameActionException {
@@ -19,7 +32,7 @@ public strictfp class Landscaper extends RobotPlayer {
                 blockCheck++;
                 for (Transaction transaction : block) {
                     int[] m = transaction.getMessage();
-                    if (m[0] == 1234567) { message = m; foundSoupBlock = true; break; }
+                    if (m[5] == 7654321) { message = m; foundSoupBlock = true; break; }
                 }
             }
             MapLocation hqLocation = new MapLocation(message[3], message[4]);
@@ -64,13 +77,15 @@ public strictfp class Landscaper extends RobotPlayer {
                 RobotInfo[] nearbyRobots = rc.senseNearbyRobots(-1, rc.getTeam());
                 for (RobotInfo robot : nearbyRobots) {
                     if (robot.getType() == RobotType.LANDSCAPER) {
-                        numDefenseLandscapers++;
+                        if (robot.getLocation().isAdjacentTo(home)) {
+                            numDefenseLandscapers++;
+                        }
                     }
                 }
             }
             
             System.out.println(numDefenseLandscapers);
-            if (numDefenseLandscapers > 8) {
+            if (numDefenseLandscapers >= 8) {
                 state = 4;
             }
             
@@ -78,8 +93,15 @@ public strictfp class Landscaper extends RobotPlayer {
             else {
                 Direction hqDir = rc.getLocation().directionTo(home);
                 Direction dirtDir = hqDir.opposite();
+                for (Direction dir : directions) {
+                    if (!rc.getLocation().add(dir).isAdjacentTo(home) && rc.canDigDirt(dir)) {
+                        dirtDir = dir;
+                    }
+                }
+    
                 if (rc.canDepositDirt(Direction.CENTER)) rc.depositDirt(Direction.CENTER);
                 if (rc.canDigDirt(dirtDir)) rc.digDirt(dirtDir);
+
             }
         }
         

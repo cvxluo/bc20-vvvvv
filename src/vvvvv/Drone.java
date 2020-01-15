@@ -35,50 +35,49 @@ public strictfp class Drone extends RobotPlayer {
             // See if there are any enemy robots within striking range (distance 1 from lumberjack's radius)
             RobotInfo[] robots = rc.senseNearbyRobots(GameConstants.DELIVERY_DRONE_PICKUP_RADIUS_SQUARED, enemy);
             
-            if (robots.length > 0) {
-                // Pick up a first robot within range
-                rc.pickUpUnit(robots[0].getID());
-                System.out.println("I picked up " + robots[0].getID() + "!");
+            for (RobotInfo robot : robots) {
+                if (!robot.getType().isBuilding()) {
+                    System.out.println("I picked up " + robots[0].getID() + "!");
+                    rc.pickUpUnit(robot.getID());
+                }
             }
             
             RobotInfo[] nearbyRobots = rc.senseNearbyRobots(-1, enemy);
             System.out.println("ENEMY ROBOTS NEARBY " + nearbyRobots.length);
-            if (nearbyRobots.length > 0) {
-                for (RobotInfo r : nearbyRobots) {
-                    if (!r.getType().isBuilding()) destination = nearbyRobots[0].getLocation();
-                }
-                
-            }
             
-            else {
-                System.out.println("DRONE SEARCHING");
-                
-                int quadrant = findQuadrant(rc.getLocation());
-                if (!explored[quadrant]) {
-                    explored[quadrant] = true;
-                }
-                int nextQ = 0;
-                boolean foundNextQ = false;
-                for (int i = 1; i < 5; i++) {
-                    if (!explored[i]) { nextQ = i; foundNextQ = true; break; }
-                }
-                System.out.println("NEXT Q " + nextQ);
-                if (!foundNextQ) { explored = new boolean[5]; nextQ = quadrant; }
-                if (nextQ == 3) destination = new MapLocation(0, 0);
-                if (nextQ == 4) destination = new MapLocation(mapWidth - 1, 0);
-                if (nextQ == 1) destination = new MapLocation(mapWidth - 1, mapHeight - 1);
-                if (nextQ == 2) destination = new MapLocation(0, mapHeight - 1);
-                
-                
-                droneTryMovingTowards(destination);
+            for (RobotInfo r : nearbyRobots) {
+                if (!r.getType().isBuilding()) destination = nearbyRobots[0].getLocation();
             }
+
+            
+            System.out.println("DRONE SEARCHING");
+                
+            int quadrant = findQuadrant(rc.getLocation());
+            if (!explored[quadrant]) {
+                explored[quadrant] = true;
+            }
+            int nextQ = 0;
+            boolean foundNextQ = false;
+            for (int i = 1; i < 5; i++) {
+                if (!explored[i]) { nextQ = i; foundNextQ = true; break; }
+            }
+            System.out.println("NEXT Q " + nextQ);
+            if (!foundNextQ) { explored = new boolean[5]; nextQ = quadrant; }
+            if (nextQ == 3) destination = new MapLocation(0, 0);
+            if (nextQ == 4) destination = new MapLocation(mapWidth - 1, 0);
+            if (nextQ == 1) destination = new MapLocation(mapWidth - 1, mapHeight - 1);
+            if (nextQ == 2) destination = new MapLocation(0, mapHeight - 1);
+            
+
+            droneTryMovingTowards(destination);
+    
         } else {
             // If holding unit, do something
             
             
             for (int x = -1; x < 1; x++) {
                 for (int y = -1; y < 1; y++) {
-                    MapLocation loc = home.translate(x, y);
+                    MapLocation loc = rc.getLocation().translate(x, y);
                     if (rc.canSenseLocation(loc)) {
                         if (rc.senseFlooding(loc)) {
                             Direction dropDir = rc.getLocation().directionTo(loc);
@@ -127,7 +126,7 @@ public strictfp class Drone extends RobotPlayer {
             }
             
             
-            tryMovingTowards(destination);
+            droneTryMovingTowards(destination);
             
             
         }

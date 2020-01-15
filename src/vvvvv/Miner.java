@@ -21,7 +21,7 @@ public strictfp class Miner extends RobotPlayer {
                 blockCheck++;
                 for (Transaction transaction : block) {
                     int[] m = transaction.getMessage();
-                    if (m[0] == 1234567) { message = m; foundSoupBlock = true; break; }
+                    if (m[5] == 7654321) { message = m; foundSoupBlock = true; break; }
                 }
             }
             MapLocation soupLocation = new MapLocation(message[1], message[2]);
@@ -126,7 +126,7 @@ public strictfp class Miner extends RobotPlayer {
                     }
                 }
                 else {
-                    destination = refinery.getLocation();
+                    home = refinery.getLocation();
                 }
             }
             
