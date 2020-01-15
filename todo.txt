@@ -21,3 +21,6 @@ General:
 - Store block stuff in memory so it doesn't have to be constantly called
 - Check rc.isReady() stuff in drone - does it work, is it right
 - Write functions to determine when to stop building miners/start building stuff
+- Improve miner communication for hash determination stuff
+
+- NEED FUNCTIONS FOR DECIDING WHEN TO BUILD THINGS - tuning is becoming an issue

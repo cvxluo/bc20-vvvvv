@@ -26,6 +26,9 @@ Counter would be a net shooter built at the base - maybe consider that for offen
 
 
 To communicate:
+Note that bytecode costs for hashing and identifying, though are constant per turn, are very low - usually under 100 or something, so it's ok to do every turn
+
+
 - First integer is an identifier
 Need to think about how to do it - possible methods:
     - Hash of ID
@@ -47,6 +50,14 @@ HQ message is composed of
     - Identifier value - just change every competition
     - HQ ID
 
+
+For miner soup communication:
+    - Hashed ID value
+    - Soup Location X1
+    - Soup Location Y1
+    - Hashed ID value - this repeat indicates that the value came from a miner
+    - Miner Location X2
+    - Miner Location Y2
 
 
 Things that should be communicated:

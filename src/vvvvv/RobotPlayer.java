@@ -37,9 +37,16 @@ public strictfp class RobotPlayer {
     // Memory variables
     static MapLocation destination;
     static MapLocation home;
+    
+    static RobotType whatIsHome;
+    
     static int numBuilt;
+    static int numToBuild;
+    
+    static int lastHash;
     
     static MapLocation currentLocation;
+    static int roundNum;
     static boolean[] explored;
     static int beingBlocked;
     
@@ -83,6 +90,7 @@ public strictfp class RobotPlayer {
         mapWidth = rc.getMapWidth();
         mapHeight = rc.getMapHeight();
         numBuilt = 0;
+        numToBuild = 0;
         
         
         home = rc.getLocation();
@@ -101,6 +109,8 @@ public strictfp class RobotPlayer {
                 System.out.println("I'm a " + rc.getType() + "! Location " + rc.getLocation());
                 
                 currentLocation = rc.getLocation();
+                roundNum = rc.getRoundNum();
+                updateLastHash();
                 
                 switch (rc.getType()) {
                     case HQ:                 HQ.runHQ();                               break;
@@ -163,7 +173,7 @@ public strictfp class RobotPlayer {
             }
             
             else if (beingBlocked == 2) {
-                for (int i = 0; i < 4; i++) {
+                for (int i = 0; i < 6; i++) {
                     right = right.rotateRight();
                     
                     System.out.println("TRYING " + right);
@@ -179,7 +189,7 @@ public strictfp class RobotPlayer {
             
             else {
                 
-                for (int i = 0; i < 4; i++) {
+                for (int i = 0; i < 6; i++) {
                     left = left.rotateLeft();
                     right = right.rotateRight();
         
@@ -256,9 +266,13 @@ public strictfp class RobotPlayer {
     
     // Find first message by its contents
     static int[] findFirstMessageByContent(int check, int index) throws GameActionException {
+        System.out.println("FIRST MESSAGE BY CONTENT CALLED");
+        System.out.println(roundNum);
         
-        for (int i = 1; i < rc.getRoundNum() - 1; i++) {
+        for (int i = 1; i < roundNum; i++) {
             Transaction[] block = rc.getBlock(i);
+            
+            System.out.println("CHECKING BLOCK " + i);
             
             for (Transaction t : block) {
                 int[] message = t.getMessage();
@@ -275,7 +289,7 @@ public strictfp class RobotPlayer {
     // Find last message by its contents
     static int[] findLastMessageByContent(int check, int index) throws GameActionException {
         
-        for (int i = rc.getRoundNum() - 1; i >= 0; i--) {
+        for (int i = roundNum - 1; i >= 1; i--) {
             Transaction[] block = rc.getBlock(i);
     
             for (Transaction t : block) {
@@ -305,6 +319,40 @@ public strictfp class RobotPlayer {
     
     // Hashing function for communication
     static int hash (int h) { return (h * 31) % 65436; }
+    
+    static void updateLastHash () throws GameActionException {
+        if (roundNum < 2) return; // Probably should find a way to optimize this away, but it's only one bytecode per turn so maybe not
+        
+        Transaction[] block = rc.getBlock(roundNum - 1);
+        
+        for (Transaction transaction : block) {
+            int[] message = transaction.getMessage();
+            if (message[0] == hash(lastHash)) { lastHash = message[0]; }
+        }
+        
+    }
+    
+    static Direction buildDirectionSpread (Direction dir) throws GameActionException{
+        Direction left = dir;
+        Direction right = dir;
+        
+        if (rc.canBuildRobot(RobotType.DESIGN_SCHOOL, dir)) { // cheapest test robot - maybe revise
+            return dir;
+        }
+        else {
+            for (int i = 0; i < 4; i++) {
+                left = left.rotateLeft();
+                right = right.rotateRight();
+                
+                if (rc.canBuildRobot(RobotType.DESIGN_SCHOOL, left)) return left;
+                if (rc.canBuildRobot(RobotType.DESIGN_SCHOOL, right)) return right;
+    
+            }
+        }
+        
+        return dir.opposite();
+        
+    }
     
     static int getElevation() {
         double E = 2.718281828459045;

@@ -24,6 +24,7 @@ public strictfp class Landscaper extends RobotPlayer {
             
             int[] message = findFirstMessageByContent(7654321, 5);
             
+            lastHash = message[0];
             MapLocation hqLocation = new MapLocation(message[3], message[4]);
             home = hqLocation;
             destination = hqLocation;
@@ -50,15 +51,16 @@ public strictfp class Landscaper extends RobotPlayer {
                 if (nextQ == 4) destination = new MapLocation(mapWidth - 1, 0);
                 if (nextQ == 1) destination = new MapLocation(mapWidth - 1, mapHeight - 1);
                 if (nextQ == 2) destination = new MapLocation(0, mapHeight - 1);
+                
+            }
     
-    
-                RobotInfo[] robots = rc.senseNearbyRobots(-1, enemy);
-                for (RobotInfo robot : robots) {
-                    if (robot.getType().isBuilding()) {
-                        destination = robot.getLocation();
-                        state = 2;
-                        break;
-                    }
+            RobotInfo[] robots = rc.senseNearbyRobots(-1, enemy);
+            for (RobotInfo robot : robots) {
+                if (robot.getType().isBuilding()) {
+                    System.out.println("DETECTED BUILDING TO FIGHT");
+                    destination = robot.getLocation();
+                    state = 2;
+                    break;
                 }
             }
             
@@ -66,24 +68,38 @@ public strictfp class Landscaper extends RobotPlayer {
         }
         
         if (state == 2) {
-            if (rc.getLocation().isAdjacentTo(destination)) {
-                Direction dumpDirtDir = rc.getLocation().directionTo(destination);
-                if (rc.canDepositDirt(dumpDirtDir)) rc.depositDirt(dumpDirtDir);
-                else {
-                    for (Direction dir : directions) {
-                        if (rc.canDigDirt(dir)) {
-                            rc.digDirt(dir);
+    
+            boolean destroyedBuilding = true;
+            RobotInfo[] robots = rc.senseNearbyRobots(-1, enemy);
+            for (RobotInfo robot : robots) {
+                if (robot.getType().isBuilding()) {
+                    if (destination == robot.getLocation()) { destroyedBuilding = false; break; }
+                }
+            }
+            
+            if (destroyedBuilding) {
+                state = 1;
+            }
+            else {
+                if (rc.getLocation().isAdjacentTo(destination)) {
+                    Direction dumpDirtDir = rc.getLocation().directionTo(destination);
+                    if (rc.canDepositDirt(dumpDirtDir)) rc.depositDirt(dumpDirtDir);
+                    else {
+                        for (Direction dir : directions) {
+                            if (rc.canDigDirt(dir)) {
+                                rc.digDirt(dir);
+                            }
                         }
                     }
                 }
+                else tryMovingTowards(destination);
             }
-            else tryMovingTowards(destination);
         }
         
         
         if (state == 3) {
             int numDefenseLandscapers = 0;
-            if (rc.canSenseLocation(home) && rc.getLocation().distanceSquaredTo(home) < 6) {
+            if (rc.canSenseLocation(home) && rc.getLocation().distanceSquaredTo(home) < 12) {
                 RobotInfo[] nearbyRobots = rc.senseNearbyRobots(-1, rc.getTeam());
                 for (RobotInfo robot : nearbyRobots) {
                     if (robot.getType() == RobotType.LANDSCAPER) {
@@ -161,15 +177,6 @@ public strictfp class Landscaper extends RobotPlayer {
                 state = 1;
             }
             
-        }
-        
-        // Constantly grab some dirt from surroundings, and grab dirt if dumping dirt on a building
-        if (turnCount % 15 == 0 || state == 2) {
-            for (Direction dir : directions) {
-                if (rc.canDigDirt(dir)) {
-                    rc.digDirt(dir);
-                }
-            }
         }
     }
     

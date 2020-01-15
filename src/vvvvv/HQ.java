@@ -5,6 +5,7 @@ import battlecode.common.*;
 public strictfp class HQ extends RobotPlayer {
     
     static void runHQ() throws GameActionException {
+        
         if (turnCount == 1) {
             
             // TODO: Optimize this
@@ -21,36 +22,41 @@ public strictfp class HQ extends RobotPlayer {
             */
             
             // kinda bad also should optimize
-            MapLocation soupLocation = new MapLocation(-1, -1);
-            MapLocation home = rc.getLocation();
+            MapLocation home = currentLocation;
+            
+            int numSoups = 0;
+            MapLocation[] soupLocations = new MapLocation[200];
             for (int x = -7; x < 7; x++) {
                 for (int y = -7; y < 7; y++) {
                     MapLocation loc = home.translate(x, y);
                     if (rc.canSenseLocation(loc)) {
-                        if (rc.senseSoup(loc) != 0) { soupLocation = loc; break; }
+                        if (rc.senseSoup(loc) != 0) { soupLocations[numSoups] = loc; numSoups++; }
                     }
                 }
             }
             
-            System.out.println("SOUP " + soupLocation);
-            int[] message = new int[7];
-            int generatedKey = (int) (Math.random() * Integer.MAX_VALUE);
-            message[0] = generatedKey; // Identifier
-            // TODO: order soups from closest to farthest
-            if (soupLocation.x != -1) { // (soups.size() > 0) {
-                MapLocation soup1 = soupLocation; // soups.pop();
-                message[1] = soup1.x;
-                message[2] = soup1.y;
-                
-            }
-            else {
-                message[1] = -1;
-                message[2] = -1;
-                
+            numToBuild = numSoups;
+            
+            int minDistance = Integer.MAX_VALUE;
+            MapLocation soupLocation = home;
+            for (int i = 0; i < numSoups; i++) {
+                int dist = home.distanceSquaredTo(soupLocations[i]);
+                if (dist < minDistance) { minDistance = dist; soupLocation = soupLocations[i]; }
             }
             
-            message[3] = rc.getLocation().x;
-            message[4] = rc.getLocation().y;
+            System.out.println("SOUP " + soupLocation);
+            int[] message = new int[7];
+            
+            // Creating a key for the later hashing
+            int generatedKey = (int) (Math.random() * Integer.MAX_VALUE);
+            message[0] = generatedKey; // Identifier
+
+            MapLocation soup1 = soupLocation; // soups.pop();
+            message[1] = soup1.x;
+            message[2] = soup1.y;
+            
+            message[3] = currentLocation.x;
+            message[4] = currentLocation.y;
             
             message[5] = 7654321;
             message[6] = rc.getID();
@@ -72,7 +78,8 @@ public strictfp class HQ extends RobotPlayer {
             }
         }
         
-        if ((turnCount % 40 == 0 || turnCount < 20) && turnCount < 275) {
+        // If there is lots of soup nearby, build many miners immediately, but slow down faster
+        if ((turnCount % 35 == 0 && turnCount < 300 - numToBuild * 8) || numToBuild > numBuilt) {
             for (Direction dir : directions) {
                 if (rc.canBuildRobot(RobotType.MINER, dir)) {
                     numBuilt++;

@@ -13,6 +13,7 @@ public strictfp class Miner extends RobotPlayer {
         if (turnCount == 1) { // Setup stuff
             
             int[] message = findFirstMessageByContent(7654321, 5); // Guarenteed that this first block will exist
+            lastHash = message[0];
             MapLocation soupLocation = new MapLocation(message[1], message[2]);
             destination = soupLocation;
             
@@ -56,7 +57,7 @@ public strictfp class Miner extends RobotPlayer {
                 state = 3;
             }
             else if (rc.canSenseLocation(destination) && rc.senseSoup(destination) == 0) { // If no soup left, go back to looking for more soup - maybe consider going back if already over a certain soup amount?
-                state = 1;
+                state = 4;
             }
             else {
                 for (Direction dir : allDirs) {
@@ -69,12 +70,15 @@ public strictfp class Miner extends RobotPlayer {
         
         if (state == 3) {
             
-            if (currentLocation.distanceSquaredTo(home) < 20 && currentLocation.distanceSquaredTo(home) > 10) {
+            if (currentLocation.distanceSquaredTo(home) < 25 && currentLocation.distanceSquaredTo(home) > 16) {
                 RobotInfo[] robots = rc.senseNearbyRobots();
                 boolean designExists = false;
                 boolean fulfillExists = false;
                 boolean refineryExists = false;
                 boolean netgunExists = false;
+                
+                Direction towardsHome = currentLocation.directionTo(home);
+                Direction oppositeHome = towardsHome.opposite();
                 
                 RobotInfo refinery = new RobotInfo(1, rc.getTeam(), RobotType.REFINERY, currentLocation); //very bad
                 for (RobotInfo robot : robots) {
@@ -84,35 +88,56 @@ public strictfp class Miner extends RobotPlayer {
                     if (robot.getType() == RobotType.NET_GUN) netgunExists = true;
                 }
                 if (!designExists) {
+                    if (rc.getTeamSoup() > 250) {
+                        rc.buildRobot(RobotType.DESIGN_SCHOOL, buildDirectionSpread(oppositeHome));
+                    }
+                    /*
                     for (Direction dir : directions) {
                         if (rc.canBuildRobot(RobotType.DESIGN_SCHOOL, dir) && rc.getTeamSoup() > 250) {
                             rc.buildRobot(RobotType.DESIGN_SCHOOL, dir);
                         }
                     }
+                    */
                 }
                 
                 if (!fulfillExists) {
+                    if (rc.getTeamSoup() > 300) {
+                        rc.buildRobot(RobotType.FULFILLMENT_CENTER, buildDirectionSpread(oppositeHome));
+    
+                    }
+                    /*
                     for (Direction dir : directions) {
                         if (rc.canBuildRobot(RobotType.FULFILLMENT_CENTER, dir) && rc.getTeamSoup() > 300) {
                             rc.buildRobot(RobotType.FULFILLMENT_CENTER, dir);
                         }
                     }
+                    */
                 }
                 
                 if (!netgunExists) {
+                    if (rc.getTeamSoup() > 500) {
+                        rc.buildRobot(RobotType.NET_GUN, buildDirectionSpread(oppositeHome));
+                    }
+                    /*
                     for (Direction dir : directions) {
                         if (rc.canBuildRobot(RobotType.NET_GUN, dir) && rc.getTeamSoup() > 500) {
                             rc.buildRobot(RobotType.NET_GUN, dir);
                         }
                     }
+                    */
                 }
                 
                 if (!refineryExists) {
+                    if (rc.getTeamSoup() > 300) {
+                        rc.buildRobot(RobotType.REFINERY, buildDirectionSpread(oppositeHome));
+                    }
+                    /*
                     for (Direction dir : directions) {
                         if (rc.canBuildRobot(RobotType.REFINERY, dir) && rc.getTeamSoup() > 300) {
                             rc.buildRobot(RobotType.REFINERY, dir);
                         }
                     }
+                    */
                 }
                 else {
                     home = refinery.getLocation();
@@ -148,19 +173,29 @@ public strictfp class Miner extends RobotPlayer {
             }
             */
             
-            boolean foundSoup = false;
-            MapLocation soupLocation = new MapLocation(-1, -1);
-            MapLocation me = currentLocation;
+            
+            int numSoups = 0;
+            MapLocation[] soupLocations = new MapLocation[200];
             for (int x = -7; x < 7; x++) {
                 for (int y = -7; y < 7; y++) {
-                    MapLocation loc = new MapLocation(me.x + x, me.y + y);
+                    MapLocation loc = currentLocation.translate(x, y);
                     if (rc.canSenseLocation(loc)) {
-                        if (rc.senseSoup(loc) != 0) { soupLocation = loc; foundSoup = true; break; }
+                        if (rc.senseSoup(loc) != 0) { soupLocations[numSoups] = loc; numSoups++; }
                     }
                 }
             }
             
-            if (!foundSoup) {
+            System.out.println("NUM SOUPS FOUND " + numSoups);
+    
+            int minDistance = Integer.MAX_VALUE;
+            MapLocation soupLocation = currentLocation;
+            for (int i = 0; i < numSoups; i++) {
+                int dist = currentLocation.distanceSquaredTo(soupLocations[i]);
+                if (dist < minDistance) { minDistance = dist; soupLocation = soupLocations[i]; }
+            }
+            
+            
+            if (numSoups == 0) {
                 
                 System.out.println("EXPLROED");
                 for (int i = 0; i < 5; i++) {
@@ -168,26 +203,70 @@ public strictfp class Miner extends RobotPlayer {
                 }
                 System.out.println();
                 
-                int quadrant = findQuadrant(currentLocation);
-                explored[quadrant] = true;
-                int nextQ = 0;
-                boolean foundNextQ = false;
-                for (int i = 1; i < 5; i++) {
-                    if (!explored[i]) { nextQ = i; foundNextQ = true; break; }
+                if (rc.canSenseLocation(destination)) {
+                    int quadrant = findQuadrant(currentLocation);
+                    explored[quadrant] = true;
+                    int nextQ = 0;
+                    boolean foundNextQ = false;
+                    for (int i = 1; i < 5; i++) {
+                        if (!explored[i]) { nextQ = i; foundNextQ = true; break; }
+                    }
+                    System.out.println("NEXT Q " + nextQ);
+                    if (!foundNextQ) { explored = new boolean[5]; nextQ = quadrant; }
+                    if (nextQ == 3) destination = new MapLocation(0, 0);
+                    if (nextQ == 4) destination = new MapLocation(mapWidth - 1, 0);
+                    if (nextQ == 1) destination = new MapLocation(mapWidth - 1, mapHeight - 1);
+                    if (nextQ == 2) destination = new MapLocation(0, mapHeight - 1);
                 }
-                System.out.println("NEXT Q " + nextQ);
-                if (!foundNextQ) { explored = new boolean[5]; nextQ = quadrant; }
-                if (nextQ == 3) destination = new MapLocation(0, 0);
-                if (nextQ == 4) destination = new MapLocation(mapWidth - 1, 0);
-                if (nextQ == 1) destination = new MapLocation(mapWidth - 1, mapHeight - 1);
-                if (nextQ == 2) destination = new MapLocation(0, mapHeight - 1);
+                
             }
             
             else {
                 destination = soupLocation;
+                
+                int[] message = new int[7];
+                message[0] = hash(lastHash);
+                message[1] = soupLocation.x;
+                message[2] = soupLocation.y;
+                
+                message[3] = hash(lastHash);
+                
+                message[4] = currentLocation.x;
+                message[5] = currentLocation.y;
+                
+                message[6] = rc.getID();
+                
+                /*
+                if (rc.canSubmitTransaction(message, 1)) {
+                    rc.submitTransaction(message, 1);
+                    System.out.println("SUBMITTED FOUND SOUP LOCATION");
+                }
+                */
+    
+                state = 1;
+    
+                boolean foundRefinery = false;
+                RobotInfo[] robots = rc.senseNearbyRobots(-1, rc.getTeam());
+                for (RobotInfo robot : robots) {
+                    if (robot.getType() == RobotType.REFINERY) {
+                        foundRefinery = true;
+                        break;
+                    }
+                }
+                
+                if (!foundRefinery) {
+                    for (Direction dir : directions) {
+                        if (rc.canBuildRobot(RobotType.REFINERY, dir)) {
+                            rc.buildRobot(RobotType.REFINERY, dir);
+                        }
+                    }
+                }
+    
             }
             
-            state = 1;
+            tryMovingTowards(destination);
+            
+            
         }
         
 
