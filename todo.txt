@@ -7,6 +7,7 @@ Optimizations:
 - When searching for things like soup, do a search radiating from the location - should be easy and done without BFS
 - Replace some MapLocation in a direction with .add() instead?
 - Bytecode issues with getting nearby MapLocations
+- Start using the new functions like senseNearbySoup
 
 
 General:
@@ -24,3 +25,6 @@ General:
 - Improve miner communication for hash determination stuff
 
 - NEED FUNCTIONS FOR DECIDING WHEN TO BUILD THINGS - tuning is becoming an issue
+- SOME SORT OF CRITICAL DRONE BUG - killing drones the moment they pick stuff up - maybe Clock.yield()?
+- Improve drone stuff so it remembers where some flooded tiles are - and communication for those tiles
+- Poor approach - if there are very few soups available, build only 3 - 4 landscapers for defense wall

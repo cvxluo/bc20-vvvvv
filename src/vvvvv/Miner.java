@@ -8,8 +8,9 @@ public strictfp class Miner extends RobotPlayer {
         int roundNum = rc.getRoundNum();
         System.out.println("STATE " + state);
         System.out.println("DESTINATION " + destination);
-        
-        
+        System.out.println("HOME " + home);
+    
+    
         if (turnCount == 1) { // Setup stuff
             
             int[] message = findFirstMessageByContent(7654321, 5); // Guarenteed that this first block will exist
@@ -69,9 +70,26 @@ public strictfp class Miner extends RobotPlayer {
         }
         
         if (state == 3) {
-            
-            if (currentLocation.distanceSquaredTo(home) < 25 && currentLocation.distanceSquaredTo(home) > 16) {
+    
+            // Bad janky code to check refinery first - should clean up
+            RobotInfo[] friendlyRobots = rc.senseNearbyRobots(-1, rc.getTeam());
+            for (RobotInfo robot : friendlyRobots) {
+                if (robot.getType() == RobotType.REFINERY) { home = robot.getLocation(); }
+    
+            }
+    
+    
+            if (currentLocation.distanceSquaredTo(home) < 30 && currentLocation.distanceSquaredTo(home) > 15) {
+                boolean isHomeHQ = false;
+                
                 RobotInfo[] robots = rc.senseNearbyRobots();
+                if (rc.canSenseLocation(home)) {
+                    for (RobotInfo r : robots) {
+                        if (r.getType() == RobotType.HQ && r.getLocation() == home) { isHomeHQ = true; break; }
+                    }
+                }
+    
+                
                 boolean designExists = false;
                 boolean fulfillExists = false;
                 boolean refineryExists = false;
@@ -80,12 +98,12 @@ public strictfp class Miner extends RobotPlayer {
                 Direction towardsHome = currentLocation.directionTo(home);
                 Direction oppositeHome = towardsHome.opposite();
                 
-                RobotInfo refinery = new RobotInfo(1, rc.getTeam(), RobotType.REFINERY, currentLocation); //very bad
+                Team friendly = rc.getTeam();
                 for (RobotInfo robot : robots) {
-                    if (robot.getType() == RobotType.DESIGN_SCHOOL) designExists = true;
-                    if (robot.getType() == RobotType.FULFILLMENT_CENTER) fulfillExists = true;
-                    if (robot.getType() == RobotType.REFINERY) { refineryExists = true; refinery = robot; }
-                    if (robot.getType() == RobotType.NET_GUN) netgunExists = true;
+                    if (robot.getType() == RobotType.DESIGN_SCHOOL && robot.getTeam() == friendly) designExists = true;
+                    if (robot.getType() == RobotType.FULFILLMENT_CENTER && robot.getTeam() == friendly) fulfillExists = true;
+                    if (robot.getType() == RobotType.REFINERY && robot.getTeam() == friendly) { refineryExists = true; home = robot.getLocation(); }
+                    if (robot.getType() == RobotType.NET_GUN && robot.getTeam() == friendly) netgunExists = true;
                 }
                 if (!designExists) {
                     if (rc.getTeamSoup() > 250) {
@@ -138,9 +156,6 @@ public strictfp class Miner extends RobotPlayer {
                         }
                     }
                     */
-                }
-                else {
-                    home = refinery.getLocation();
                 }
             }
             
@@ -248,7 +263,7 @@ public strictfp class Miner extends RobotPlayer {
                 boolean foundRefinery = false;
                 RobotInfo[] robots = rc.senseNearbyRobots(-1, rc.getTeam());
                 for (RobotInfo robot : robots) {
-                    if (robot.getType() == RobotType.REFINERY) {
+                    if (robot.getType() == RobotType.REFINERY || robot.getType() == RobotType.HQ) {
                         foundRefinery = true;
                         break;
                     }

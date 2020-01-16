@@ -282,11 +282,10 @@ public strictfp class RobotPlayer {
                 boolean refineryExists = false;
                 boolean netgunExists = false;
                 
-                RobotInfo refinery = new RobotInfo(1, rc.getTeam(), RobotType.REFINERY, rc.getLocation()); //very bad
                 for (RobotInfo robot : robots) {
                     if (robot.getType() == RobotType.DESIGN_SCHOOL) designExists = true;
                     if (robot.getType() == RobotType.FULFILLMENT_CENTER) fulfillExists = true;
-                    if (robot.getType() == RobotType.REFINERY) { refineryExists = true; refinery = robot; }
+                    if (robot.getType() == RobotType.REFINERY) { refineryExists = true; destination = robot.getLocation(); }
                     if (robot.getType() == RobotType.NET_GUN) netgunExists = true;
                 }
                 if (!designExists) {
@@ -320,9 +319,7 @@ public strictfp class RobotPlayer {
                         }
                     }
                 }
-                else {
-                    destination = refinery.getLocation();
-                }
+
             }
             
             for (Direction dir : directions) {

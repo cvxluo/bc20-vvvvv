@@ -36,6 +36,7 @@ public strictfp class HQ extends RobotPlayer {
             }
             
             numToBuild = numSoups;
+            System.out.println("NUM MINERS TO BUILD " + numToBuild);
             
             int minDistance = Integer.MAX_VALUE;
             MapLocation soupLocation = home;
@@ -78,8 +79,8 @@ public strictfp class HQ extends RobotPlayer {
             }
         }
         
-        // If there is lots of soup nearby, build many miners immediately, but slow down faster
-        if ((turnCount % 35 == 0 && turnCount < 300 - numToBuild * 8) || numToBuild > numBuilt) {
+        // If there is lots of soup nearby, build many miners immediately, but slow down faster - needs to be a bit better
+        if ((turnCount % 40 == 0 && turnCount < 400 - numToBuild * 8) || 6 > numBuilt) {
             for (Direction dir : directions) {
                 if (rc.canBuildRobot(RobotType.MINER, dir)) {
                     numBuilt++;
