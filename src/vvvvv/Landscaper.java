@@ -81,8 +81,11 @@ public strictfp class Landscaper extends RobotPlayer {
                 state = 1;
             }
             else {
+                Direction dirToDest = currentLocation.directionTo(destination);
+                MapLocation locToDest = rc.adjacentLocation(dirToDest);
+                
                 if (rc.getLocation().isAdjacentTo(destination)) {
-                    Direction dumpDirtDir = rc.getLocation().directionTo(destination);
+                    Direction dumpDirtDir = dirToDest;
                     if (rc.canDepositDirt(dumpDirtDir)) rc.depositDirt(dumpDirtDir);
                     else {
                         for (Direction dir : directions) {
@@ -92,12 +95,39 @@ public strictfp class Landscaper extends RobotPlayer {
                         }
                     }
                 }
+                
+                else if (currentLocation.distanceSquaredTo(destination) < 6) {
+                    if (!isAccessible(locToDest)) {
+                        boolean isHigherElevation = rc.senseElevation(currentLocation) < rc.senseElevation(locToDest);
+                        if (!isHigherElevation) { if (rc.canDepositDirt(dirToDest)) rc.depositDirt(dirToDest); }
+                        else { if (rc.canDigDirt(dirToDest)) rc.digDirt(dirToDest); }
+        
+                    }
+                    
+                    else {
+                        tryMovingTowards(destination);
+                    }
+                }
+                
+                
                 else tryMovingTowards(destination);
             }
         }
         
         
         if (state == 3) {
+    
+            RobotInfo[] robots = rc.senseNearbyRobots(-1, enemy);
+            for (RobotInfo robot : robots) {
+                if (robot.getType().isBuilding()) {
+                    System.out.println("DETECTED BUILDING TO FIGHT");
+                    destination = robot.getLocation();
+                    state = 2;
+                    break;
+                }
+            }
+            
+            
             int numDefenseLandscapers = 0;
             if (rc.canSenseLocation(home) && rc.getLocation().distanceSquaredTo(home) < 12) {
                 RobotInfo[] nearbyRobots = rc.senseNearbyRobots(-1, rc.getTeam());

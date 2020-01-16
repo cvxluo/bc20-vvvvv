@@ -24,25 +24,18 @@ public strictfp class HQ extends RobotPlayer {
             // kinda bad also should optimize
             MapLocation home = currentLocation;
             
-            int numSoups = 0;
-            MapLocation[] soupLocations = new MapLocation[200];
-            for (int x = -7; x < 7; x++) {
-                for (int y = -7; y < 7; y++) {
-                    MapLocation loc = home.translate(x, y);
-                    if (rc.canSenseLocation(loc)) {
-                        if (rc.senseSoup(loc) != 0) { soupLocations[numSoups] = loc; numSoups++; }
-                    }
-                }
-            }
-            
+            MapLocation[] soupLocations = rc.senseNearbySoup();
+            int numSoups = soupLocations.length;
+    
             numToBuild = numSoups;
             System.out.println("NUM MINERS TO BUILD " + numToBuild);
             
             int minDistance = Integer.MAX_VALUE;
             MapLocation soupLocation = home;
             for (int i = 0; i < numSoups; i++) {
-                int dist = home.distanceSquaredTo(soupLocations[i]);
-                if (dist < minDistance) { minDistance = dist; soupLocation = soupLocations[i]; }
+                MapLocation soupToCheck = soupLocations[i];
+                int dist = home.distanceSquaredTo(soupToCheck);
+                if (dist < minDistance) { minDistance = dist; soupLocation = soupToCheck; }
             }
             
             System.out.println("SOUP " + soupLocation);

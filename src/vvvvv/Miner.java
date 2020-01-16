@@ -79,7 +79,7 @@ public strictfp class Miner extends RobotPlayer {
             }
     
     
-            if (currentLocation.distanceSquaredTo(home) < 30 && currentLocation.distanceSquaredTo(home) > 15) {
+            if (currentLocation.distanceSquaredTo(home) < 30 && currentLocation.distanceSquaredTo(home) > 12) {
                 boolean isHomeHQ = false;
                 
                 RobotInfo[] robots = rc.senseNearbyRobots();
@@ -189,27 +189,20 @@ public strictfp class Miner extends RobotPlayer {
             */
             
             
-            int numSoups = 0;
-            MapLocation[] soupLocations = new MapLocation[200];
-            for (int x = -7; x < 7; x++) {
-                for (int y = -7; y < 7; y++) {
-                    MapLocation loc = currentLocation.translate(x, y);
-                    if (rc.canSenseLocation(loc)) {
-                        if (rc.senseSoup(loc) != 0) { soupLocations[numSoups] = loc; numSoups++; }
-                    }
-                }
-            }
+            MapLocation[] soupLocations = rc.senseNearbySoup();
+            int numSoups = soupLocations.length;
             
-            System.out.println("NUM SOUPS FOUND " + numSoups);
-    
             int minDistance = Integer.MAX_VALUE;
             MapLocation soupLocation = currentLocation;
             for (int i = 0; i < numSoups; i++) {
                 int dist = currentLocation.distanceSquaredTo(soupLocations[i]);
                 if (dist < minDistance) { minDistance = dist; soupLocation = soupLocations[i]; }
             }
-            
-            
+    
+            System.out.println("NUM SOUPS FOUND " + numSoups);
+    
+    
+    
             if (numSoups == 0) {
                 
                 System.out.println("EXPLROED");

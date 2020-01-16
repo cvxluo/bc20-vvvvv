@@ -141,9 +141,12 @@ public strictfp class RobotPlayer {
     static boolean tryMovingTowards(MapLocation goal) throws GameActionException {
         // remember to not use this with drones, because they can go over flooded tiles
         
-        Direction dirToMove = rc.getLocation().directionTo(goal);
+        Direction dirToMove = currentLocation.directionTo(goal);
         MapLocation nextStep = rc.adjacentLocation(dirToMove);
+        
+        System.out.println("GOAL IN DIRECTION " + dirToMove);
 
+        if (!rc.isReady()) Clock.yield();
         
         if (rc.canMove(dirToMove) && !rc.senseFlooding(nextStep)) {
             beingBlocked = 0;
@@ -159,14 +162,17 @@ public strictfp class RobotPlayer {
             
             if (beingBlocked == 1) {
                 // Only move left if being blocked
-                for (int i = 0; i < 4; i++) {
+                for (int i = 0; i < 6; i++) {
                     left = left.rotateLeft();
-                    System.out.println("TRYING " + left);
-        
                     MapLocation nextLeft = rc.adjacentLocation(left);
+                    
+                    System.out.println("IN LEFT FOLLOWING");
+                    System.out.println("TRYING " + left);
+                    System.out.println("IN LOCATION " + nextLeft);
                     
                     if (rc.canMove(left) && !rc.senseFlooding(nextLeft)) {
                         rc.move(left);
+                        return true;
                     }
                 }
                 
@@ -175,13 +181,16 @@ public strictfp class RobotPlayer {
             else if (beingBlocked == 2) {
                 for (int i = 0; i < 6; i++) {
                     right = right.rotateRight();
-                    
-                    System.out.println("TRYING " + right);
-        
                     MapLocation nextRight = rc.adjacentLocation(right);
-        
+    
+                    System.out.println("IN RIGHT FOLLOWING");
+                    System.out.println("TRYING " + right);
+                    System.out.println("IN LOCATION " + nextRight);
+    
+    
                     if (rc.canMove(right) && !rc.senseFlooding(nextRight)) {
                         rc.move(right);
+                        return true;
                     }
                 }
                 
@@ -189,21 +198,30 @@ public strictfp class RobotPlayer {
             
             else {
                 
-                for (int i = 0; i < 6; i++) {
+                for (int i = 0; i < 4; i++) {
                     left = left.rotateLeft();
                     right = right.rotateRight();
         
                     MapLocation nextLeft = rc.adjacentLocation(left);
                     MapLocation nextRight = rc.adjacentLocation(right);
-        
-        
+    
+                    System.out.println("TRYING " + left);
+                    System.out.println("TRYING " + right);
+                    System.out.println("IN LOCATION " + nextLeft);
+                    System.out.println("IN LOCATION " + nextRight);
+    
+    
+    
+    
                     if (rc.canMove(left) && !rc.senseFlooding(nextLeft)) {
                         beingBlocked = 1;
                         rc.move(left);
+                        return true;
                     }
                     if (rc.canMove(right) && !rc.senseFlooding(nextRight)) {
                         beingBlocked = 2;
                         rc.move(right);
+                        return true;
                     }
                 }
             }
@@ -360,6 +378,11 @@ public strictfp class RobotPlayer {
         return 1;
         // return (int) (Math.exp(0.0028*x - 1.38*Math.sin(0.00157*x - 1.73) + 1.38*sin(-1.73)) - 1);
     }
+    
+    
+    // Checks whether goal is currently within elevation limits
+    // Does not check whether the location is in sensor radius
+    static boolean isAccessible(MapLocation goal) throws GameActionException { return Math.abs(rc.senseElevation(goal) - rc.senseElevation(rc.getLocation())) <= 3; }
     
 
 }
