@@ -36,7 +36,7 @@ public strictfp class Landscaper extends RobotPlayer {
         if (state == 1) {
     
             if (rc.canSenseLocation(destination)) {
-                int quadrant = findQuadrant(rc.getLocation());
+                int quadrant = findQuadrant(currentLocation);
                 if (!explored[quadrant]) {
                     explored[quadrant] = true;
                 }
@@ -45,12 +45,9 @@ public strictfp class Landscaper extends RobotPlayer {
                 for (int i = 1; i < 5; i++) {
                     if (!explored[i]) { nextQ = i; foundNextQ = true; break; }
                 }
-                System.out.println("NEXT Q " + nextQ);
                 if (!foundNextQ) { explored = new boolean[5]; nextQ = quadrant; }
-                if (nextQ == 3) destination = new MapLocation(0, 0);
-                if (nextQ == 4) destination = new MapLocation(mapWidth - 1, 0);
-                if (nextQ == 1) destination = new MapLocation(mapWidth - 1, mapHeight - 1);
-                if (nextQ == 2) destination = new MapLocation(0, mapHeight - 1);
+                System.out.println("NEXT Q " + nextQ);
+                destination = getQuadrantCorner(nextQ);
                 
             }
     
@@ -84,7 +81,7 @@ public strictfp class Landscaper extends RobotPlayer {
                 Direction dirToDest = currentLocation.directionTo(destination);
                 MapLocation locToDest = rc.adjacentLocation(dirToDest);
                 
-                if (rc.getLocation().isAdjacentTo(destination)) {
+                if (currentLocation.isAdjacentTo(destination)) {
                     Direction dumpDirtDir = dirToDest;
                     if (rc.canDepositDirt(dumpDirtDir)) rc.depositDirt(dumpDirtDir);
                     else {
@@ -129,7 +126,7 @@ public strictfp class Landscaper extends RobotPlayer {
             
             
             int numDefenseLandscapers = 0;
-            if (rc.canSenseLocation(home) && rc.getLocation().distanceSquaredTo(home) < 12) {
+            if (rc.canSenseLocation(home) && currentLocation.distanceSquaredTo(home) < 9) {
                 RobotInfo[] nearbyRobots = rc.senseNearbyRobots(-1, rc.getTeam());
                 for (RobotInfo robot : nearbyRobots) {
                     if (robot.getType() == RobotType.LANDSCAPER) {
@@ -151,31 +148,67 @@ public strictfp class Landscaper extends RobotPlayer {
             if (numDefenseLandscapers >= numDefensiveSpaces) {
                 state = 1;
             }
-            
+    
             if (!currentLocation.isAdjacentTo(home)) tryMovingTowards(home);
             else {
                 Direction hqDir = currentLocation.directionTo(home);
                 Direction dirtDir = hqDir.opposite();
-                for (Direction dir : directions) {
-                    if (!currentLocation.add(dir).isAdjacentTo(home) && rc.canDigDirt(dir)) {
-                        dirtDir = dir;
+                
+                // Try digging opposite to HQ - if not possible, look for other spaces
+                if (rc.canDigDirt(dirtDir)) {
+                    rc.digDirt(dirtDir);
+                }
+                else {
+                    for (Direction dir : directions) {
+                        if (!currentLocation.add(dir).isAdjacentTo(home) && rc.canDigDirt(dir)) {
+                            dirtDir = dir;
+                        }
                     }
                 }
-    
-                if (rc.canDepositDirt(Direction.CENTER)) rc.depositDirt(Direction.CENTER);
-                if (rc.canDigDirt(dirtDir)) rc.digDirt(dirtDir);
-
+                
+                if (rc.getDirtCarrying() > 0) {
+                    
+                    // Check if nearby tiles have landscapers that are nearby
+                    int myElevation = rc.senseElevation(currentLocation);
+                    Direction left = hqDir;
+                    Direction right = hqDir;
+                    for (int i = 0; i < 3; i++) {
+                        left = left.rotateLeft();
+                        right = right.rotateRight();
+                        MapLocation leftLocation = rc.adjacentLocation(left);
+                        MapLocation rightLocation = rc.adjacentLocation(right);
+                        
+                        if (rc.isLocationOccupied(leftLocation) && rc.senseRobotAtLocation(leftLocation).type == RobotType.LANDSCAPER && leftLocation.isAdjacentTo(home)) {
+                            int leftEle = rc.senseElevation(leftLocation);
+                            if (leftEle < myElevation) rc.depositDirt(left);
+                        }
+                        
+                        if (rc.isLocationOccupied(rightLocation) && rc.senseRobotAtLocation(rightLocation).type == RobotType.LANDSCAPER && rightLocation.isAdjacentTo(home)) {
+                            int rightEle = rc.senseElevation(rightLocation);
+                            if (rightEle < myElevation) rc.depositDirt(right);
+                        }
+        
+                    }
+                    
+                    if (rc.canDepositDirt(Direction.CENTER)) {
+                        rc.depositDirt(Direction.CENTER);
+                    }
+                }
+                else if (rc.canDigDirt(dirtDir)) rc.digDirt(dirtDir);
+        
             }
         }
         
         if (state == 4) {
-            
+    
             int numDefenseLandscapers = 0;
-            if (rc.canSenseLocation(home) && currentLocation.distanceSquaredTo(home) < 6) {
+            if (rc.canSenseLocation(home) && currentLocation.distanceSquaredTo(home) < 9) {
                 RobotInfo[] nearbyRobots = rc.senseNearbyRobots(-1, rc.getTeam());
                 for (RobotInfo robot : nearbyRobots) {
                     if (robot.getType() == RobotType.LANDSCAPER) {
-                        numDefenseLandscapers++;
+                        if (robot.getLocation().isAdjacentTo(home)) {
+                            numDefenseLandscapers++;
+                        }
                     }
                 }
             }
@@ -199,10 +232,7 @@ public strictfp class Landscaper extends RobotPlayer {
                 }
                 System.out.println("NEXT Q " + nextQ);
                 if (!foundNextQ) { explored = new boolean[5]; nextQ = quadrant; }
-                if (nextQ == 3) destination = new MapLocation(0, 0);
-                if (nextQ == 4) destination = new MapLocation(mapWidth - 1, 0);
-                if (nextQ == 1) destination = new MapLocation(mapWidth - 1, mapHeight - 1);
-                if (nextQ == 2) destination = new MapLocation(0, mapHeight - 1);
+                destination = getQuadrantCorner(nextQ);
                 
                 state = 1;
             }

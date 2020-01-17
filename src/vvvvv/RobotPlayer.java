@@ -43,6 +43,8 @@ public strictfp class RobotPlayer {
     static int numBuilt;
     static int numToBuild;
     
+    static int hashAtRound;
+    static int roundLastHashed;
     static int lastHash;
     
     static MapLocation currentLocation;
@@ -63,12 +65,17 @@ public strictfp class RobotPlayer {
      * 4 - exploring map for more soup
      *
      *
-     * For landscapers: //wip, should revise
+     * For landscapers:
      * 1 - searching for HQ
      * 2 - dumping dirt on HQ
      *
      * 3 - defensive landscaper
      * 4 - looking if defense is needed
+     *
+     *
+     * For drones:
+     * 1 - searching for enemy unit to pick up, not holding anything
+     * 2 - picked up enemy unit, searching for flood to drop in
      */
     
     
@@ -110,7 +117,6 @@ public strictfp class RobotPlayer {
                 
                 currentLocation = rc.getLocation();
                 roundNum = rc.getRoundNum();
-                updateLastHash();
                 
                 switch (rc.getType()) {
                     case HQ:                 HQ.runHQ();                               break;
@@ -334,9 +340,27 @@ public strictfp class RobotPlayer {
         }
     }
     
+    // Takes either 1, 2, 3, or 4 only
+    static MapLocation getQuadrantCorner(int q) {
+        if (q == 1) return new MapLocation(mapWidth - 1, mapHeight - 1);
+        if (q == 2) return new MapLocation(0, mapHeight - 1);
+        if (q == 3) return new MapLocation(0, 0);
+        if (q == 4) return new MapLocation(mapWidth - 1, 0);
+        
+        return new MapLocation(-1, -1);
+    }
+    
     
     // Hashing function for communication
     static int hash (int h) { return (h * 31) % 65436; }
+    
+    static int computeHashForRound(int r, int initialHash) {
+        int h = initialHash;
+        for (int i = 1; i < r; i++) {
+            h = hash(h);
+        }
+        return h;
+    }
     
     static void updateLastHash () throws GameActionException {
         if (roundNum < 2) return; // Probably should find a way to optimize this away, but it's only one bytecode per turn so maybe not
@@ -375,8 +399,7 @@ public strictfp class RobotPlayer {
     static int getElevation() {
         double E = 2.718281828459045;
         int x = rc.getRoundNum();
-        return 1;
-        // return (int) (Math.exp(0.0028*x - 1.38*Math.sin(0.00157*x - 1.73) + 1.38*sin(-1.73)) - 1);
+        return (int) (Math.exp(0.0028*x - 1.38*Math.sin(0.00157*x - 1.73) + 1.38*Math.sin(-1.73)) - 1);
     }
     
     

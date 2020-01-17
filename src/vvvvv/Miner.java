@@ -18,6 +18,9 @@ public strictfp class Miner extends RobotPlayer {
             MapLocation soupLocation = new MapLocation(message[1], message[2]);
             destination = soupLocation;
             
+            MapLocation homeLocation = new MapLocation(message[3], message[4]);
+            home = homeLocation;
+            
             state = 1;
             
             int quadrant = findQuadrant(rc.getLocation());
@@ -106,7 +109,7 @@ public strictfp class Miner extends RobotPlayer {
                     if (robot.getType() == RobotType.NET_GUN && robot.getTeam() == friendly) netgunExists = true;
                 }
                 if (!designExists) {
-                    if (rc.getTeamSoup() > 250) {
+                    if (rc.getTeamSoup() > 250 + roundNum / 100) {
                         rc.buildRobot(RobotType.DESIGN_SCHOOL, buildDirectionSpread(oppositeHome));
                     }
                     /*
@@ -119,7 +122,7 @@ public strictfp class Miner extends RobotPlayer {
                 }
                 
                 if (!fulfillExists) {
-                    if (rc.getTeamSoup() > 300) {
+                    if (rc.getTeamSoup() > 300 + roundNum / 75) {
                         rc.buildRobot(RobotType.FULFILLMENT_CENTER, buildDirectionSpread(oppositeHome));
     
                     }
@@ -133,7 +136,7 @@ public strictfp class Miner extends RobotPlayer {
                 }
                 
                 if (!netgunExists) {
-                    if (rc.getTeamSoup() > 500) {
+                    if (rc.getTeamSoup() > 400) {
                         rc.buildRobot(RobotType.NET_GUN, buildDirectionSpread(oppositeHome));
                     }
                     /*
@@ -146,7 +149,7 @@ public strictfp class Miner extends RobotPlayer {
                 }
                 
                 if (!refineryExists) {
-                    if (rc.getTeamSoup() > 300) {
+                    if (rc.getTeamSoup() > 300 + roundNum / 125) {
                         rc.buildRobot(RobotType.REFINERY, buildDirectionSpread(oppositeHome));
                     }
                     /*
@@ -221,10 +224,7 @@ public strictfp class Miner extends RobotPlayer {
                     }
                     System.out.println("NEXT Q " + nextQ);
                     if (!foundNextQ) { explored = new boolean[5]; nextQ = quadrant; }
-                    if (nextQ == 3) destination = new MapLocation(0, 0);
-                    if (nextQ == 4) destination = new MapLocation(mapWidth - 1, 0);
-                    if (nextQ == 1) destination = new MapLocation(mapWidth - 1, mapHeight - 1);
-                    if (nextQ == 2) destination = new MapLocation(0, mapHeight - 1);
+                    destination = getQuadrantCorner(nextQ);
                 }
                 
             }

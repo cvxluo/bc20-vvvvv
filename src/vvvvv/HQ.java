@@ -72,8 +72,16 @@ public strictfp class HQ extends RobotPlayer {
             }
         }
         
+        int numSurrounding = 0;
+        for (Direction dir : directions) {
+            if (rc.isLocationOccupied(rc.adjacentLocation(dir))) numSurrounding++;
+        }
+        
+        System.out.println("NUM SURROUNDING " + numSurrounding);
+        
         // If there is lots of soup nearby, build many miners immediately, but slow down faster - needs to be a bit better
-        if ((turnCount % 40 == 0 && turnCount < 400 - numToBuild * 8) || 6 > numBuilt) {
+        if (((turnCount % 40 == 0 && turnCount < 400 - numToBuild * 8) || 6 > numBuilt) && numSurrounding < 7) {
+            System.out.println("BUILDING MINER");
             for (Direction dir : directions) {
                 if (rc.canBuildRobot(RobotType.MINER, dir)) {
                     numBuilt++;
