@@ -66,8 +66,8 @@ public strictfp class HQ extends RobotPlayer {
             message[5] = 7654321;
             message[6] = rc.getID();
             
-            if (rc.canSubmitTransaction(message, 30)) {
-                rc.submitTransaction(message, 30);
+            if (rc.canSubmitTransaction(message, 20)) {
+                rc.submitTransaction(message, 20);
                 System.out.println("SUCCESSFULLY SUBMITTED TRANSACTION");
             }
         }
@@ -82,13 +82,6 @@ public strictfp class HQ extends RobotPlayer {
                 }
             }
         }
-        
-        int numSurrounding = 0;
-        for (Direction dir : directions) {
-            if (rc.isLocationOccupied(rc.adjacentLocation(dir))) numSurrounding++;
-        }
-        
-        System.out.println("NUM SURROUNDING " + numSurrounding);
     
         
         int numFloodedTiles = 0;
@@ -146,7 +139,7 @@ public strictfp class HQ extends RobotPlayer {
         
         
         // If there is lots of soup nearby, build many miners immediately, but slow down faster - needs to be a bit better
-        if (((turnCount % 30 == 0 && turnCount < 400) || 4 > numBuilt) && !sentPanicMessage) {
+        if (((turnCount % 35 == 0 && turnCount < 400) || 4 > numBuilt) && !sentPanicMessage) {
             System.out.println("BUILDING MINER");
             for (Direction dir : directions) {
                 if (rc.canBuildRobot(RobotType.MINER, dir)) {

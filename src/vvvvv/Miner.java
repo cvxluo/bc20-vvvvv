@@ -178,7 +178,7 @@ public strictfp class Miner extends RobotPlayer {
                 int numSurrounding = 0;
                 for (Direction dir : directions) {
                     MapLocation adj = home.add(dir);
-                    if (rc.isLocationOccupied(adj)) numSurrounding++;
+                    if (rc.canSenseLocation(adj) && rc.isLocationOccupied(adj)) numSurrounding++;
                 }
                 if (numSurrounding == 8) {
                     for (Direction dir : directions) {

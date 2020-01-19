@@ -132,19 +132,6 @@ public strictfp class Landscaper extends RobotPlayer {
         
         
         if (state == 3) {
-    
-            // If already flooded, just die
-            int numFloodedTiles = 0;
-            for (int x = -5; x < 5; x++) {
-                for (int y = -5; y < 5; y++) {
-                    MapLocation check = currentLocation.translate(x, y);
-                    if (rc.canSenseLocation(check) && rc.senseFlooding(check)) {
-                        numFloodedTiles++;
-                    }
-                }
-            }
-            if (numFloodedTiles > 40) { state = 5; }
-    
             
             // Keep checking whether enough defensive landscapers have been allocated
             int numDefenseLandscapers = 0;
@@ -153,7 +140,7 @@ public strictfp class Landscaper extends RobotPlayer {
             if (rc.canSenseLocation(home) && currentLocation.distanceSquaredTo(home) < 9) {
                 for (Direction dir : directions) {
                     MapLocation adj = home.add(dir);
-                    if (rc.isLocationOccupied(adj)) {
+                    if (rc.canSenseLocation(adj) && rc.isLocationOccupied(adj)) {
                         RobotInfo adjRobot = rc.senseRobotAtLocation(adj);
                         if (adjRobot.getType() == RobotType.LANDSCAPER) {
                             numDefenseLandscapers++;
@@ -175,6 +162,18 @@ public strictfp class Landscaper extends RobotPlayer {
                     state = 1;
                 }
             }
+    
+            // If already flooded, just die
+            int numFloodedTiles = 0;
+            for (int x = -5; x < 5; x++) {
+                for (int y = -5; y < 5; y++) {
+                    MapLocation check = currentLocation.translate(x, y);
+                    if (rc.canSenseLocation(check) && rc.senseFlooding(check)) {
+                        numFloodedTiles++;
+                    }
+                }
+            }
+            if (numFloodedTiles > 40 && numDefenseLandscapers >= numDefensiveSpaces) { state = 5; }
             
             
             
@@ -252,7 +251,9 @@ public strictfp class Landscaper extends RobotPlayer {
                     if (message[0] == previousRoundHash && message[1] == previousRoundHash && message[2] == previousRoundHash
                             && message[4] == previousRoundHash && message[5] == previousRoundHash) {
                         System.out.println("RECIEVED POOR WALL MESSAGE");
-                        state = 5;
+                        if (numDefenseLandscapers < numDefensiveSpaces) {
+                            state = 5;
+                        }
                     }
                 }
                 
@@ -328,7 +329,7 @@ public strictfp class Landscaper extends RobotPlayer {
             if (rc.canSenseLocation(home) && currentLocation.distanceSquaredTo(home) < 9) {
                 for (Direction dir : directions) {
                     MapLocation adj = home.add(dir);
-                    if (rc.isLocationOccupied(adj)) {
+                    if (rc.canSenseLocation(adj) && rc.isLocationOccupied(adj)) {
                         RobotInfo adjRobot = rc.senseRobotAtLocation(adj);
                         if (adjRobot.getType() == RobotType.LANDSCAPER) {
                             numDefenseLandscapers++;
