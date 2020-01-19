@@ -38,19 +38,19 @@ public strictfp class RobotPlayer {
     static MapLocation destination;
     static MapLocation home;
     
-    static RobotType whatIsHome;
-    
     static int numBuilt;
     static int numToBuild;
     
     static int hashAtRound;
     static int roundLastHashed;
-    static int lastHash;
+    static int firstHash;
     
     static MapLocation currentLocation;
     static int roundNum;
     static boolean[] explored;
     static int beingBlocked;
+    
+    static boolean sentPanicMessage;
     
     static int state;
     /**
@@ -71,6 +71,7 @@ public strictfp class RobotPlayer {
      *
      * 3 - defensive landscaper
      * 4 - looking if defense is needed
+     * 5 - poor landscaper defensive
      *
      *
      * For drones:
@@ -176,6 +177,8 @@ public strictfp class RobotPlayer {
                     System.out.println("TRYING " + left);
                     System.out.println("IN LOCATION " + nextLeft);
                     
+                    if (!rc.onTheMap(nextLeft)) { beingBlocked = 2; break; }
+                    
                     if (rc.canMove(left) && !rc.senseFlooding(nextLeft)) {
                         rc.move(left);
                         return true;
@@ -184,7 +187,7 @@ public strictfp class RobotPlayer {
                 
             }
             
-            else if (beingBlocked == 2) {
+            if (beingBlocked == 2) {
                 for (int i = 0; i < 6; i++) {
                     right = right.rotateRight();
                     MapLocation nextRight = rc.adjacentLocation(right);
@@ -193,7 +196,8 @@ public strictfp class RobotPlayer {
                     System.out.println("TRYING " + right);
                     System.out.println("IN LOCATION " + nextRight);
     
-    
+                    if (!rc.onTheMap(nextRight)) { beingBlocked = 1; break; }
+                    
                     if (rc.canMove(right) && !rc.senseFlooding(nextRight)) {
                         rc.move(right);
                         return true;
@@ -352,27 +356,36 @@ public strictfp class RobotPlayer {
     
     
     // Hashing function for communication
-    static int hash (int h) { return (h * 31) % 65436; }
+    static int hash (int h) { return (h % 65436) * 31 + 256; }
     
-    static int computeHashForRound(int r, int initialHash) {
-        int h = initialHash;
-        for (int i = 1; i < r; i++) {
+    
+    static void updateHashToRound(int r) {
+        int h = hashAtRound;
+        for (int i = roundLastHashed; i < r; i++) {
             h = hash(h);
         }
+        hashAtRound = h;
+        roundLastHashed = r;
+    }
+    
+    static int computeHashForRound(int r) {
+        int h = hashAtRound;
+        for (int i = roundLastHashed; i < r; i++) {
+            h = hash(h);
+        }
+        
         return h;
     }
     
-    static void updateLastHash () throws GameActionException {
-        if (roundNum < 2) return; // Probably should find a way to optimize this away, but it's only one bytecode per turn so maybe not
-        
-        Transaction[] block = rc.getBlock(roundNum - 1);
-        
-        for (Transaction transaction : block) {
-            int[] message = transaction.getMessage();
-            if (message[0] == hash(lastHash)) { lastHash = message[0]; }
+    static int computeHashForCurrentRound() {
+        int h = hashAtRound;
+        for (int i = roundLastHashed; i < roundNum; i++) {
+            h = hash(h);
         }
         
+        return h;
     }
+    
     
     static Direction buildDirectionSpread (Direction dir) throws GameActionException{
         Direction left = dir;

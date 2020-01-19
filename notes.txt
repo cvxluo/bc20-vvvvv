@@ -1,8 +1,4 @@
 Strategy Ideas:
-- Making walls around the HQ
-- Sending waves of drones to pick up enemy units and drop them in water
-- Net shooter lattice?
-
 - Implement state based thing like last year
 - Most movable units can be run on a home-destination frame - they go to the destination, do something, go back home, do something, and repeat
 
@@ -14,15 +10,13 @@ Go to the enemy HQ and use a drone to put a landscaper next to it, to bury it
 Rush strat:
 Build landscaper, grab dirt, rush to enemy base
 Wait long enough, then build miner if strat doesn't work
+Bad matchups - WateredDown, Volcano is kinda weak, InADitch glitches out, DidAMonkeyMakeThis also is buggy with design school placement
 
 
-Plan:
-Wall around HQ - surrounded by drones, except for one tile?
-DDD
-DHD
-DDD
-Counter would be a net shooter built at the base - maybe consider that for offense
-
+AS OF SEEDING
+- Rush is the major issue - no implementation against it
+- Have to polish up miner build code - still janky
+- Small optimizations in turtle will win us the games - have to investigate
 
 
 To communicate:
@@ -52,6 +46,15 @@ HQ message is composed of
 
 
 For miner soup communication:
+    - Hashed ID value
+    - Soup Location X1
+    - Soup Location Y1
+    - Hashed ID value - this repeat indicates that the value came from a miner
+    - Miner Location X2
+    - Miner Location Y2
+
+
+For HQ surrounded by water and landscaper should start rotating communication:
     - Hashed ID value
     - Soup Location X1
     - Soup Location Y1

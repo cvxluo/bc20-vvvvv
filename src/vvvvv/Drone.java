@@ -4,6 +4,8 @@ import battlecode.common.*;
 public strictfp class Drone extends RobotPlayer {
     
     static void runDeliveryDrone() throws GameActionException {
+        
+        System.out.println("IN STATE " + state);
         System.out.println("DESTINATION " + destination);
         
         if (turnCount == 1) {
@@ -36,8 +38,7 @@ public strictfp class Drone extends RobotPlayer {
     
     
             for (RobotInfo robot : robots) {
-                if (!robot.getType().isBuilding() && !robot.getType().canFly()) {
-                    
+                if (rc.canPickUpUnit(robot.getID())) {
                     System.out.println("I picked up " + robots[0].getID() + "!");
                     state = 2;
                     rc.pickUpUnit(robot.getID());
