@@ -22,4 +22,3 @@ General:
 
 - NEED FUNCTIONS FOR DECIDING WHEN TO BUILD THINGS - tuning is becoming an issue
 - Improve drone stuff so it remembers where some flooded tiles are - and communication for those tiles
-- Poor approach - if there are very few soups available, build only 3 - 4 landscapers for defense wall

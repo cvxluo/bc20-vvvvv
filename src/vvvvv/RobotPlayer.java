@@ -50,8 +50,6 @@ public strictfp class RobotPlayer {
     static boolean[] explored;
     static int beingBlocked;
     
-    static boolean sentPanicMessage;
-    
     static int state;
     /**
      * State Indicators:
@@ -77,6 +75,8 @@ public strictfp class RobotPlayer {
      * For drones:
      * 1 - searching for enemy unit to pick up, not holding anything
      * 2 - picked up enemy unit, searching for flood to drop in
+     * 3 - surround HQ when walled in
+     * 4 - initial journey to HQ to check
      */
     
     

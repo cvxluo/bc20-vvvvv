@@ -4,7 +4,11 @@ import battlecode.common.*;
 
 public strictfp class HQ extends RobotPlayer {
     
+    static boolean sentPanicMessage;
+    
     static int soupsFound;
+    static int numLandscapersSurrounding;
+    static int roundsSinceLastLandscaper;
     
     static void runHQ() throws GameActionException {
         
@@ -26,6 +30,9 @@ public strictfp class HQ extends RobotPlayer {
             
             sentPanicMessage = false;
             soupsFound = 0;
+            numLandscapersSurrounding = 0;
+            roundsSinceLastLandscaper = 0;
+            
             // kinda bad also should optimize
             MapLocation home = currentLocation;
             
@@ -76,15 +83,62 @@ public strictfp class HQ extends RobotPlayer {
     
         // Shoot down any drones if seen
         RobotInfo[] robots = rc.senseNearbyRobots(-1, enemy);
-        for (RobotInfo robot : robots) {
-            if (robot.getType() == RobotType.DELIVERY_DRONE) {
-                int id = robot.getID();
-                if (rc.canShootUnit(id)) {
-                    rc.shootUnit(id);
+        if (robots.length > 0) {
+            int closestDroneID = robots[0].getID();
+            int closestDist = Integer.MAX_VALUE;
+            
+            for (RobotInfo robot : robots) {
+                if (robot.getType() == RobotType.DELIVERY_DRONE) {
+                    int id = robot.getID();
+                    if (currentLocation.distanceSquaredTo(robot.getLocation()) < closestDist) {
+                        closestDist = currentLocation.distanceSquaredTo(robot.getLocation());
+                        closestDroneID = id;
+                    }
+                }
+        
+                else if (robot.getType() == RobotType.LANDSCAPER) {
+                    // panic
+                }
+            }
+    
+            if (rc.canShootUnit(closestDroneID)) {
+                rc.shootUnit(closestDroneID);
+            }
+        }
+
+    
+        int landscapersDetected = 0;
+    
+        for (Direction dir : directions) {
+            MapLocation adj = rc.adjacentLocation(dir);
+            if (rc.canSenseLocation(adj) && rc.isLocationOccupied(adj)) {
+                RobotInfo r = rc.senseRobotAtLocation(adj);
+                if (r.getType() == RobotType.LANDSCAPER && rc.getTeam() == r.getTeam()) {
+                    landscapersDetected++;
                 }
             }
         }
-    
+        
+        // After round 200, start considering panicing if no more landscapers are coming
+        if (roundNum > 200) {
+            System.out.println("LANDSCAPERS DETECTED " + landscapersDetected);
+            System.out.println("NUM LANDSDCAPERS SRU " + numLandscapersSurrounding);
+            
+            // If we already have 8 landscapers, don't do anything
+            if (landscapersDetected == 8) {
+                roundsSinceLastLandscaper = 0;
+            }
+            else if (landscapersDetected > numLandscapersSurrounding) {
+                numLandscapersSurrounding = landscapersDetected;
+                roundsSinceLastLandscaper = 0;
+            }
+            else {
+                roundsSinceLastLandscaper++;
+            }
+            
+            
+        }
+        
         
         int numFloodedTiles = 0;
         for (int x = -7; x < 7; x++) {
@@ -98,7 +152,7 @@ public strictfp class HQ extends RobotPlayer {
         
         System.out.println("NUM FLOODED TILES " + numFloodedTiles);
         
-        if (numFloodedTiles > 50 && !sentPanicMessage && turnCount > 250) {
+        if ((numFloodedTiles > 50 || (roundsSinceLastLandscaper > 125 + rc.getTeamSoup() / 10)) && !sentPanicMessage && turnCount > 250) {
             int[] message = new int[7];
             int currentRoundHash = computeHashForCurrentRound();
             message[0] = currentRoundHash;
@@ -141,7 +195,7 @@ public strictfp class HQ extends RobotPlayer {
         
         
         // If there is lots of soup nearby, build many miners immediately, but slow down faster - needs to be a bit better
-        if (((turnCount % 35 == 0 && turnCount < 400) || 4 > numBuilt) && !sentPanicMessage) {
+        if (((turnCount % 50 == 0 && turnCount < 400) || 4 > numBuilt) && !sentPanicMessage) {
             System.out.println("BUILDING MINER");
             for (Direction dir : directions) {
                 if (rc.canBuildRobot(RobotType.MINER, dir)) {

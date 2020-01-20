@@ -35,7 +35,103 @@ public strictfp class Miner extends RobotPlayer {
         updateHashToRound(Math.max(1, roundNum - 20));
         
         
+        Transaction[] b = rc.getBlock(roundNum - 1);
+        for (Transaction t : b) {
+            int[] message = t.getMessage();
+            int previousRoundHash = computeHashForRound(roundNum - 1);
+        
+            if (message[0] == previousRoundHash && message[1] == previousRoundHash && message[2] == previousRoundHash
+                    && message[4] == previousRoundHash && message[5] == previousRoundHash) {
+                System.out.println("RECIEVED POOR WALL MESSAGE");
+                rc.disintegrate();
+            }
+        }
+        
+        
         if (state == 1) {
+    
+            if (currentLocation.distanceSquaredTo(home) < 15 && currentLocation.distanceSquaredTo(home) > 7) {
+                boolean isHomeHQ = false;
+        
+                RobotInfo[] robots = rc.senseNearbyRobots(-1, rc.getTeam());
+        
+                if (rc.canSenseLocation(home)) {
+                    for (RobotInfo r : robots) {
+                        if (r.getType() == RobotType.HQ && r.getLocation() == home) { isHomeHQ = true; break; }
+                    }
+                }
+        
+        
+                boolean designExists = false;
+                boolean fulfillExists = false;
+                boolean refineryExists = false;
+                boolean netgunExists = false;
+        
+                Direction towardsHome = currentLocation.directionTo(home);
+                Direction oppositeHome = towardsHome.opposite();
+        
+                for (RobotInfo robot : robots) {
+                    if (robot.getType() == RobotType.DESIGN_SCHOOL) designExists = true;
+                    if (robot.getType() == RobotType.FULFILLMENT_CENTER) fulfillExists = true;
+                    if (robot.getType() == RobotType.REFINERY) { refineryExists = true; home = robot.getLocation(); }
+                    if (robot.getType() == RobotType.NET_GUN) netgunExists = true;
+                }
+        
+                if (!designExists) {
+                    if (rc.getTeamSoup() > 200 + roundNum / 8) {
+                        rc.buildRobot(RobotType.DESIGN_SCHOOL, buildDirectionSpread(oppositeHome));
+                    }
+                    /*
+                    for (Direction dir : directions) {
+                        if (rc.canBuildRobot(RobotType.DESIGN_SCHOOL, dir) && rc.getTeamSoup() > 250) {
+                            rc.buildRobot(RobotType.DESIGN_SCHOOL, dir);
+                        }
+                    }
+                    */
+                }
+        
+                if (!fulfillExists) {
+                    if (rc.getTeamSoup() > 220 + roundNum / 30) {
+                        rc.buildRobot(RobotType.FULFILLMENT_CENTER, buildDirectionSpread(oppositeHome));
+                
+                    }
+                    /*
+                    for (Direction dir : directions) {
+                        if (rc.canBuildRobot(RobotType.FULFILLMENT_CENTER, dir) && rc.getTeamSoup() > 300) {
+                            rc.buildRobot(RobotType.FULFILLMENT_CENTER, dir);
+                        }
+                    }
+                    */
+                }
+        
+                if (!netgunExists) {
+                    if (rc.getTeamSoup() > 300) {
+                        rc.buildRobot(RobotType.NET_GUN, buildDirectionSpread(oppositeHome));
+                    }
+                    /*
+                    for (Direction dir : directions) {
+                        if (rc.canBuildRobot(RobotType.NET_GUN, dir) && rc.getTeamSoup() > 500) {
+                            rc.buildRobot(RobotType.NET_GUN, dir);
+                        }
+                    }
+                    */
+                }
+        
+                if (!refineryExists) {
+                    if (rc.getTeamSoup() > 250 + roundNum / 12) {
+                        rc.buildRobot(RobotType.REFINERY, buildDirectionSpread(oppositeHome));
+                    }
+                    /*
+                    for (Direction dir : directions) {
+                        if (rc.canBuildRobot(RobotType.REFINERY, dir) && rc.getTeamSoup() > 300) {
+                            rc.buildRobot(RobotType.REFINERY, dir);
+                        }
+                    }
+                    */
+                }
+            }
+            
+            
             
             boolean foundSoup = false;
             for (Direction dir : allDirs) {
@@ -118,7 +214,7 @@ public strictfp class Miner extends RobotPlayer {
                 }
                 
                 if (!designExists) {
-                    if (rc.getTeamSoup() > 250 + roundNum / 100) {
+                    if (rc.getTeamSoup() > 200 + roundNum / 15) {
                         rc.buildRobot(RobotType.DESIGN_SCHOOL, buildDirectionSpread(oppositeHome));
                     }
                     /*
@@ -131,7 +227,7 @@ public strictfp class Miner extends RobotPlayer {
                 }
                 
                 if (!fulfillExists) {
-                    if (rc.getTeamSoup() > 300 + roundNum / 40) {
+                    if (rc.getTeamSoup() > 250 + roundNum / 40) {
                         rc.buildRobot(RobotType.FULFILLMENT_CENTER, buildDirectionSpread(oppositeHome));
     
                     }
@@ -220,13 +316,21 @@ public strictfp class Miner extends RobotPlayer {
             
             
             MapLocation[] soupLocations = rc.senseNearbySoup();
-            int numSoups = soupLocations.length;
+            int numSoups = 0;
             
             int minDistance = Integer.MAX_VALUE;
             MapLocation soupLocation = currentLocation;
-            for (int i = 0; i < numSoups; i++) {
-                int dist = currentLocation.distanceSquaredTo(soupLocations[i]);
-                if (dist < minDistance) { minDistance = dist; soupLocation = soupLocations[i]; }
+            for (int i = 0; i < soupLocations.length; i++) {
+                MapLocation soup = soupLocations[i];
+                int dist = currentLocation.distanceSquaredTo(soup);
+                if (dist < minDistance) {
+                    // Check if soup is actually accessible
+                    boolean canReach = false;
+                    for (Direction dir : directions) {
+                        MapLocation soupAdj = soup.add(dir);
+                        if (rc.canSenseLocation(soupAdj) && isAccessible(soupAdj) && !rc.senseFlooding(soupAdj)) { canReach = true; minDistance = dist; soupLocation = soupLocations[i]; numSoups++; break; }
+                    }
+                }
             }
     
             System.out.println("NUM SOUPS FOUND " + numSoups);

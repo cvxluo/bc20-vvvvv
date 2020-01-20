@@ -99,7 +99,7 @@ public strictfp class Landscaper extends RobotPlayer {
                     }
                 }
                 
-                else if (currentLocation.distanceSquaredTo(destination) < 9) {
+                else if (currentLocation.distanceSquaredTo(destination) < 14) {
                     if (!isAccessible(locToDest)) {
                         boolean isHigherElevation = rc.senseElevation(currentLocation) < rc.senseElevation(locToDest);
                         if (isHigherElevation) {
@@ -143,12 +143,9 @@ public strictfp class Landscaper extends RobotPlayer {
             if (rc.canSenseLocation(home) && currentLocation.distanceSquaredTo(home) < 9) {
                 for (Direction dir : directions) {
                     MapLocation adj = home.add(dir);
-                    if (rc.canSenseLocation(adj) && rc.isLocationOccupied(adj)) {
-                        RobotInfo adjRobot = rc.senseRobotAtLocation(adj);
-                        if (adjRobot.getType() == RobotType.LANDSCAPER) {
-                            numDefenseLandscapers++;
-                            numDefensiveSpaces++;
-                        }
+                    if (rc.canSenseLocation(adj) && rc.isLocationOccupied(adj) && rc.senseRobotAtLocation(adj).getType() == RobotType.LANDSCAPER) {
+                        numDefenseLandscapers++;
+                        numDefensiveSpaces++;
                     } else {
                         MapLocation adjAdj = adj.add(dir);
                         MapLocation aaLeft = adj.add(dir.rotateLeft());
@@ -176,7 +173,7 @@ public strictfp class Landscaper extends RobotPlayer {
                     }
                 }
             }
-            if (numFloodedTiles > 40 && numDefenseLandscapers < numDefensiveSpaces) { state = 5; }
+            if (numFloodedTiles > 45 && numDefenseLandscapers < numDefensiveSpaces) { state = 5; }
             
             
             
@@ -370,9 +367,12 @@ public strictfp class Landscaper extends RobotPlayer {
         
         // Poor wall defense
         if (state == 5) {
+            
+            if (!currentLocation.isAdjacentTo(home)) rc.disintegrate();
     
             Direction hqDir = currentLocation.directionTo(home);
     
+            // First, we have to check if we have dirt - if we don't, grab some
             if (rc.getDirtCarrying() == 0) {
                 Direction dirtDir = hqDir.opposite();
     
@@ -399,6 +399,7 @@ public strictfp class Landscaper extends RobotPlayer {
                 Direction left = hqDir.rotateLeft();
                 Direction right = hqDir.rotateRight();
                 
+                // If we are on a cardinal tile, we need to check 4 spaces
                 if (hqDir == Direction.NORTH || hqDir == Direction.SOUTH || hqDir == Direction.EAST || hqDir == Direction.WEST) {
                     MapLocation leftLocation = rc.adjacentLocation(left);
                     MapLocation rightLocation = rc.adjacentLocation(right);
@@ -420,6 +421,7 @@ public strictfp class Landscaper extends RobotPlayer {
                     right = right.rotateRight();
                 }
 
+                // Otherwise, we just check 2 spaces, the ones directly adjacent
                 MapLocation leftLocation = rc.adjacentLocation(left);
                 MapLocation rightLocation = rc.adjacentLocation(right);
                 
@@ -436,19 +438,28 @@ public strictfp class Landscaper extends RobotPlayer {
                     else { if (rc.canDepositDirt(Direction.CENTER)) rc.depositDirt(Direction.CENTER); }
                 }
                 
+                
+                // Now, if the wall is sufficiently built, we look for the lowest tile, and try to fix it
                 else {
                     MapLocation[] adjacentTiles = new MapLocation[8];
                     int[] elevations = new int[8];
                     MapLocation lowestLoc = adjacentTiles[0];
+                    MapLocation lowestAdjLoc = adjacentTiles[0];
                     int lowestEle = Integer.MAX_VALUE;
+                    int lowestAdjEle = Integer.MAX_VALUE;
     
                     for (int i = 0; i < 8; i++) {
                         adjacentTiles[i] = home.add(directions[i]);
                         elevations[i] = rc.senseElevation(adjacentTiles[i]);
+                        if (adjacentTiles[i].isAdjacentTo(currentLocation)) {
+                            if (elevations[i] < lowestAdjEle) { lowestAdjEle = elevations[i]; lowestAdjLoc = adjacentTiles[i]; }
+                        }
                         if (elevations[i] < lowestEle) { lowestEle = elevations[i]; lowestLoc = adjacentTiles[i]; }
                     }
                     
                     Direction dirToLowest = currentLocation.directionTo(lowestLoc);
+                    Direction dirToLowestAdj = currentLocation.directionTo(lowestAdjLoc);
+    
     
                     System.out.println("LOWEST LOC " + lowestLoc);
                     System.out.println("DIR TO LOWEST LOC " + dirToLowest);
@@ -457,7 +468,25 @@ public strictfp class Landscaper extends RobotPlayer {
                     if (currentLocation.isAdjacentTo(lowestLoc)) {
                         if (rc.canDepositDirt(dirToLowest)) rc.depositDirt(dirToLowest);
                     }
-                    else { destination = lowestLoc; tryMovingTowards(destination); }
+                    else {
+                        int numLowest = 0;
+                        for (Direction d : directions) {
+                            MapLocation a = lowestLoc.add(d);
+                            if (rc.canSenseLocation(a)) {
+                                if (rc.isLocationOccupied(a) && rc.senseRobotAtLocation(a).getType() == RobotType.LANDSCAPER) {
+                                    numLowest++;
+                                }
+                            }
+                        }
+                        if (numLowest > 1) {
+                            if (rc.canDepositDirt(dirToLowestAdj)) rc.depositDirt(dirToLowestAdj);
+                        }
+                        else {
+                            destination = lowestLoc;
+                            tryMovingTowards(destination);
+                        }
+                    
+                    }
                     
                 }
                 
