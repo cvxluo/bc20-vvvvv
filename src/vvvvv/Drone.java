@@ -74,6 +74,7 @@ public strictfp class Drone extends RobotPlayer {
                     for (int i = 1; i < 5; i++) {
                         if (!explored[i]) { nextQ = i; foundNextQ = true; break; }
                     }
+                    if (!foundNextQ) { explored = new boolean[5]; nextQ = quadrant; }
                     System.out.println("NEXT Q " + nextQ);
                     destination = getQuadrantCorner(nextQ);
             
@@ -99,7 +100,7 @@ public strictfp class Drone extends RobotPlayer {
                     if (rc.senseFlooding(loc)) {
                         System.out.println("TRYING TO DROP IN " + loc);
                         Direction dropDir = currentLocation.directionTo(loc);
-                        if (rc.canDropUnit(dropDir)) rc.dropUnit(dropDir);
+                        if (rc.canDropUnit(dropDir)) { rc.dropUnit(dropDir); state = 1; }
                     }
                 }
             }

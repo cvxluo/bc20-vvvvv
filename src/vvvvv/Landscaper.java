@@ -104,12 +104,12 @@ public strictfp class Landscaper extends RobotPlayer {
                                 if (rc.canDigDirt(dirToDest)) rc.digDirt(dirToDest);
                             }
                             else {
-                                if (rc.canDepositDirt(dirToDest.opposite())) rc.depositDirt(dirToDest.opposite());
+                                if (rc.canDepositDirt(Direction.CENTER)) rc.depositDirt(Direction.CENTER);
                             }
                         }
                         else {
                             if (rc.getDirtCarrying() > 0) {
-                                if (rc.canDepositDirt(dirToDest)) rc.depositDirt(dirToDest);
+                                if (rc.canDepositDirt(Direction.CENTER)) rc.depositDirt(Direction.CENTER);
                             }
                             else {
                                 if (rc.canDigDirt(dirToDest.opposite())) rc.digDirt(dirToDest.opposite());
@@ -173,7 +173,7 @@ public strictfp class Landscaper extends RobotPlayer {
                     }
                 }
             }
-            if (numFloodedTiles > 40 && numDefenseLandscapers >= numDefensiveSpaces) { state = 5; }
+            if (numFloodedTiles > 40 && numDefenseLandscapers < numDefensiveSpaces) { state = 5; }
             
             
             
