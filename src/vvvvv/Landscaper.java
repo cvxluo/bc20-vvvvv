@@ -112,7 +112,7 @@ public strictfp class Landscaper extends RobotPlayer {
                         }
                         else {
                             if (rc.getDirtCarrying() > 0) {
-                                if (rc.canDepositDirt(Direction.CENTER)) rc.depositDirt(Direction.CENTER);
+                                if (rc.canDepositDirt(dirToDest)) rc.depositDirt(dirToDest);
                             }
                             else {
                                 if (rc.canDigDirt(dirToDest.opposite())) rc.digDirt(dirToDest.opposite());
