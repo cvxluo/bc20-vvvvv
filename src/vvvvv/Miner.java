@@ -32,7 +32,7 @@ public strictfp class Miner extends RobotPlayer {
         }
         
         // Reduce computations by keeping a hash updated relatively close to the current round num
-        updateHashToRound(Math.max(1, roundNum - 100));
+        updateHashToRound(Math.max(1, roundNum - 20));
         
         
         if (state == 1) {

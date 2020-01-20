@@ -71,7 +71,9 @@ public strictfp class HQ extends RobotPlayer {
                 System.out.println("SUCCESSFULLY SUBMITTED TRANSACTION");
             }
         }
-        
+    
+        updateHashToRound(Math.max(1, roundNum - 20));
+    
         // Shoot down any drones if seen
         RobotInfo[] robots = rc.senseNearbyRobots(-1, enemy);
         for (RobotInfo robot : robots) {

@@ -20,6 +20,9 @@ public strictfp class Landscaper extends RobotPlayer {
         System.out.println("DESTINATION " + destination);
         System.out.println("STATE " + state);
         
+        updateHashToRound(Math.max(1, roundNum - 20));
+    
+        
         if (turnCount == 1) {
             
             int[] message = findFirstMessageByContent(7654321, 5);
@@ -256,8 +259,8 @@ public strictfp class Landscaper extends RobotPlayer {
                         }
                     }
                 }
-                
-                
+    
+    
                 Direction hqDir = currentLocation.directionTo(home);
                 Direction dirtDir = hqDir.opposite();
                 
@@ -266,25 +269,13 @@ public strictfp class Landscaper extends RobotPlayer {
                     rc.digDirt(hqDir);
                 }
                 
-                // Try digging opposite to HQ - if not possible, look for other spaces
-                if (rc.canDigDirt(dirtDir)) {
-                    rc.digDirt(dirtDir);
-                }
-                else {
-                    for (Direction dir : directions) {
-                        if (!currentLocation.add(dir).isAdjacentTo(home) && rc.canDigDirt(dir)) {
-                            dirtDir = dir;
-                        }
-                    }
-                }
-                
                 if (rc.getDirtCarrying() > 0) {
                     
                     // Check if nearby tiles have landscapers that are nearby
                     int myElevation = rc.senseElevation(currentLocation);
                     Direction left = hqDir;
                     Direction right = hqDir;
-                    for (int i = 0; i < 3; i++) {
+                    for (int i = 0; i < 2; i++) {
                         left = left.rotateLeft();
                         right = right.rotateRight();
                         MapLocation leftLocation = rc.adjacentLocation(left);
@@ -306,8 +297,21 @@ public strictfp class Landscaper extends RobotPlayer {
                         rc.depositDirt(Direction.CENTER);
                     }
                 }
-                else if (rc.canDigDirt(dirtDir)) rc.digDirt(dirtDir);
-        
+                else {
+                    // Try digging opposite to HQ - if not possible, look for other spaces
+                    if (rc.canDigDirt(dirtDir)) {
+                        rc.digDirt(dirtDir);
+                    }
+                    else {
+                        for (Direction dir : directions) {
+                            if (!currentLocation.add(dir).isAdjacentTo(home) && rc.canDigDirt(dir)) {
+                                dirtDir = dir;
+                            }
+                        }
+                    }
+                }
+    
+    
             }
         }
         

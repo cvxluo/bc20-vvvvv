@@ -3,6 +3,9 @@ import battlecode.common.*;
 
 public strictfp class Drone extends RobotPlayer {
     
+    static boolean foundFloodedTile;
+    static MapLocation floodedTile;
+    
     static void runDeliveryDrone() throws GameActionException {
         
         System.out.println("IN STATE " + state);
@@ -27,6 +30,7 @@ public strictfp class Drone extends RobotPlayer {
             if (!foundNextQ) { explored = new boolean[5]; nextQ = quadrant; }
             destination = getQuadrantCorner(nextQ);
             
+            foundFloodedTile = false;
             state = 1;
         }
         
@@ -116,6 +120,8 @@ public strictfp class Drone extends RobotPlayer {
                     if (rc.canSenseLocation(loc)) {
                         if (rc.senseFlooding(loc)) {
                             destination = loc;
+                            floodedTile = loc;
+                            foundFloodedTile = true;
                             foundFlood = true;
                             break;
                         }
@@ -127,19 +133,24 @@ public strictfp class Drone extends RobotPlayer {
             System.out.println("FLOOD AT  " + destination);
             
             if (!foundFlood) {
-                int quadrant = findQuadrant(currentLocation);
-                if (!explored[quadrant]) {
-                    explored[quadrant] = true;
+                if (foundFloodedTile) {
+                    destination = floodedTile;
                 }
-                int nextQ = 0;
-                boolean foundNextQ = false;
-                for (int i = 1; i < 5; i++) {
-                    if (!explored[i]) { nextQ = i; foundNextQ = true; break; }
-                }
-                System.out.println("NEXT Q " + nextQ);
-                destination = getQuadrantCorner(nextQ);
-                if (!foundNextQ) { explored = new boolean[5]; nextQ = quadrant; }
                 
+                else {
+                    int quadrant = findQuadrant(currentLocation);
+                    if (!explored[quadrant]) {
+                        explored[quadrant] = true;
+                    }
+                    int nextQ = 0;
+                    boolean foundNextQ = false;
+                    for (int i = 1; i < 5; i++) {
+                        if (!explored[i]) { nextQ = i; foundNextQ = true; break; }
+                    }
+                    System.out.println("NEXT Q " + nextQ);
+                    destination = getQuadrantCorner(nextQ);
+                    if (!foundNextQ) { explored = new boolean[5]; nextQ = quadrant; }
+                }
             }
             
             
