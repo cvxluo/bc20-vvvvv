@@ -1,4 +1,4 @@
-package vvvvv;
+package Seeding;
 import battlecode.common.*;
 
 /**
@@ -25,7 +25,7 @@ public strictfp class Landscaper extends RobotPlayer {
         
         if (turnCount == 1) {
             
-            int[] message = findFirstMessageByContent(1919191, 5);
+            int[] message = findFirstMessageByContent(7654321, 5);
     
             hashAtRound = message[0];
             firstHash = hashAtRound;

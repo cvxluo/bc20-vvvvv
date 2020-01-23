@@ -1,4 +1,4 @@
-package vvvvv;
+package Seeding;
 import battlecode.common.*;
 
 
@@ -70,7 +70,7 @@ public strictfp class HQ extends RobotPlayer {
             message[3] = currentLocation.x;
             message[4] = currentLocation.y;
             
-            message[5] = 1919191;
+            message[5] = 7654321;
             message[6] = rc.getID();
             
             if (rc.canSubmitTransaction(message, 20)) {

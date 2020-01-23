@@ -1,4 +1,4 @@
-package vvvvv;
+package Seeding;
 import battlecode.common.*;
 
 public strictfp class Drone extends RobotPlayer {
@@ -13,7 +13,7 @@ public strictfp class Drone extends RobotPlayer {
         
         if (turnCount == 1) {
     
-            int[] message = findFirstMessageByContent(1919191, 5); // Guarenteed that this first block will exist
+            int[] message = findFirstMessageByContent(7654321, 5); // Guarenteed that this first block will exist
     
             hashAtRound = message[0];
             firstHash = hashAtRound;

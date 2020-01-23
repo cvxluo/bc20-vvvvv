@@ -1,4 +1,4 @@
-package vvvvv;
+package Seeding;
 import battlecode.common.*;
 
 public strictfp class Miner extends RobotPlayer {
@@ -14,7 +14,7 @@ public strictfp class Miner extends RobotPlayer {
     
         if (turnCount == 1) { // Setup stuff
             
-            int[] message = findFirstMessageByContent(1919191, 5); // Guarenteed that this first block will exist
+            int[] message = findFirstMessageByContent(7654321, 5); // Guarenteed that this first block will exist
             hashAtRound = message[0];
             firstHash = hashAtRound;
             roundLastHashed = 1;
