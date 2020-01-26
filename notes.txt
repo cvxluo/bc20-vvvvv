@@ -22,6 +22,7 @@ AS OF SEEDING
 To communicate:
 Note that bytecode costs for hashing and identifying, though are constant per turn, are very low - usually under 100 or something, so it's ok to do every turn
 
+Every 10 turns HQ communciates info
 
 - First integer is an identifier
 Need to think about how to do it - possible methods:
@@ -62,6 +63,14 @@ For HQ surrounded by water and landscaper should start rotating communication:
     - Miner Location X2
     - Miner Location Y2
 
+
+For constant 10 turn communication
+    - Hashed ID value
+    - Soup Location X1
+    - Soup Location Y1
+    - Hashed ID value - this repeat indicates that the value came from a miner
+    - Miner Location X2
+    - Miner Location Y2
 
 Things that should be communicated:
     - Soup locations

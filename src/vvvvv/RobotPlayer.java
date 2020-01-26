@@ -26,6 +26,9 @@ public strictfp class RobotPlayer {
     static RobotType[] spawnedByMiner = {RobotType.REFINERY, RobotType.VAPORATOR, RobotType.DESIGN_SCHOOL,
             RobotType.FULFILLMENT_CENTER, RobotType.NET_GUN};
     
+    // How high landscapers should be building a lattice
+    static final int LATTICE_HEIGHT = 8;
+    
     // Constants to declare at beginning
     static Team enemy;
     static int turnCount;
@@ -70,6 +73,8 @@ public strictfp class RobotPlayer {
      * 3 - defensive landscaper
      * 4 - looking if defense is needed
      * 5 - poor landscaper defensive
+     *
+     * 6 - building lattice
      *
      *
      * For drones:
@@ -409,10 +414,12 @@ public strictfp class RobotPlayer {
         
     }
     
-    static int getElevation() {
-        double E = 2.718281828459045;
-        int x = rc.getRoundNum();
-        return (int) (Math.exp(0.0028*x - 1.38*Math.sin(0.00157*x - 1.73) + 1.38*Math.sin(-1.73)) - 1);
+    
+    static boolean isOnLattice(MapLocation loc) {
+        int x = hqLocation.x;
+        int y = hqLocation.y;
+        
+        return (loc.x - x) % 2 == 0 && (loc.y - y) % 2 == 0;
     }
     
     

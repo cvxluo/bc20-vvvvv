@@ -3,22 +3,11 @@ REMEMBER TO REMOVE OUTPUT BEFORE SUBMITTING
 REMEMBER TO REMOVE OUTPUT BEFORE SUBMITTING
 REMEMBER TO REMOVE OUTPUT BEFORE SUBMITTING
 
-Optimizations:
-- Function that returns all locations within sense radius efficiently - probably not possible, should record bytecode use
-- Ordering lists of MapLocations by closest
-- Bytecode issues with getting nearby MapLocations
-
 
 General:
-- Improve miner exploration code
 - Bad building code for miners - just randomly set up stuff, should be around the base
-- Shoot down closest drones rather than just random
-- Store block stuff in memory so it doesn't have to be constantly called
-- Check rc.isReady() stuff in drone - does it work, is it right
-- Write functions to determine when to stop building miners/start building stuff
-- Improve miner communication for hash determination stuff
-
+- LANDSCAPERS THAT SPAWN AFTER POOR WALL MESSAGE WILL TRY TO LEVEL THE WALL
+- NEED CRUNCH CODE
 - LANDSCAPERS THAT ARE PART OF THE WALL SHOULD HELP MAKE OTHER WALL TILES ACCESSIBLE FOR OTHER LANDSCAPERS
-
 - NEED FUNCTIONS FOR DECIDING WHEN TO BUILD THINGS - tuning is becoming an issue
 - Improve drone stuff so it remembers where some flooded tiles are - and communication for those tiles

@@ -24,6 +24,7 @@ public strictfp class Miner extends RobotPlayer {
             
             MapLocation homeLocation = new MapLocation(message[3], message[4]);
             home = homeLocation;
+            hqLocation = homeLocation;
             
             state = 1;
             
@@ -43,7 +44,11 @@ public strictfp class Miner extends RobotPlayer {
             if (message[0] == previousRoundHash && message[1] == previousRoundHash && message[2] == previousRoundHash
                     && message[4] == previousRoundHash && message[5] == previousRoundHash) {
                 System.out.println("RECIEVED POOR WALL MESSAGE");
-                rc.disintegrate();
+                
+                if (currentLocation.distanceSquaredTo(hqLocation) < 12) {
+                    rc.disintegrate();
+                }
+                
             }
         }
         

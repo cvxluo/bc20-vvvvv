@@ -21,6 +21,7 @@ public strictfp class Drone extends RobotPlayer {
     
             MapLocation homeLocation = new MapLocation(message[3], message[4]);
             home = homeLocation;
+            hqLocation = homeLocation;
     
             destination = home;
             
@@ -166,6 +167,21 @@ public strictfp class Drone extends RobotPlayer {
         
         if (state == 3) {
             System.out.println("TRYING TO SURROUND HQ");
+            
+            if (rc.isCurrentlyHoldingUnit()) {
+                MapLocation me = currentLocation;
+                for (Direction dir : directions) {
+                    MapLocation loc = me.add(dir);
+                    System.out.println("LOOKING AT " + loc + " TO DROP");
+                    if (rc.canSenseLocation(loc)) {
+                        if (rc.senseFlooding(loc)) {
+                            System.out.println("TRYING TO DROP IN " + loc);
+                            Direction dropDir = currentLocation.directionTo(loc);
+                            if (rc.canDropUnit(dropDir)) { rc.dropUnit(dropDir); }
+                        }
+                    }
+                }
+            }
     
             // See if there are any enemy robots within striking range (distance 1 from lumberjack's radius)
             RobotInfo[] robots = rc.senseNearbyRobots(GameConstants.DELIVERY_DRONE_PICKUP_RADIUS_SQUARED, enemy);

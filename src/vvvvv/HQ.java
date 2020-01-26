@@ -10,6 +10,8 @@ public strictfp class HQ extends RobotPlayer {
     static int numLandscapersSurrounding;
     static int roundsSinceLastLandscaper;
     
+    static int lastRegularBroadcast;
+    
     static void runHQ() throws GameActionException {
         
         if (turnCount == 1) {
@@ -32,6 +34,7 @@ public strictfp class HQ extends RobotPlayer {
             soupsFound = 0;
             numLandscapersSurrounding = 0;
             roundsSinceLastLandscaper = 0;
+            lastRegularBroadcast = 0;
             
             // kinda bad also should optimize
             MapLocation home = currentLocation;
@@ -73,8 +76,8 @@ public strictfp class HQ extends RobotPlayer {
             message[5] = 1919191;
             message[6] = rc.getID();
             
-            if (rc.canSubmitTransaction(message, 20)) {
-                rc.submitTransaction(message, 20);
+            if (rc.canSubmitTransaction(message, 30)) {
+                rc.submitTransaction(message, 30);
                 System.out.println("SUCCESSFULLY SUBMITTED TRANSACTION");
             }
         }
@@ -193,6 +196,12 @@ public strictfp class HQ extends RobotPlayer {
         }
         
         
+        // Regularly broadcast updates on information
+        lastRegularBroadcast++;
+        if (lastRegularBroadcast >= 10) {
+            lastRegularBroadcast = 0;
+            
+        }
         
         // If there is lots of soup nearby, build many miners immediately, but slow down faster - needs to be a bit better
         if (((turnCount % 50 == 0 && turnCount < 400) || 4 > numBuilt) && !sentPanicMessage) {

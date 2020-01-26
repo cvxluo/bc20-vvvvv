@@ -31,9 +31,10 @@ public strictfp class Landscaper extends RobotPlayer {
             firstHash = hashAtRound;
             roundLastHashed = 1;
             
-            MapLocation hqLocation = new MapLocation(message[3], message[4]);
-            home = hqLocation;
-            destination = hqLocation;
+            MapLocation homeLocation = new MapLocation(message[3], message[4]);
+            home = homeLocation;
+            destination = homeLocation;
+            hqLocation = homeLocation;
             
             state = 4;
         }
@@ -174,6 +175,27 @@ public strictfp class Landscaper extends RobotPlayer {
                 }
             }
             if (numFloodedTiles > 45 && numDefenseLandscapers < numDefensiveSpaces) { state = 5; }
+    
+            
+            // Recieve poor wall message
+            Transaction[] block = rc.getBlock(roundNum - 1);
+    
+            for (Transaction t : block) {
+                int[] message = t.getMessage();
+                int previousRoundHash = computeHashForRound(roundNum - 1);
+        
+                if (message[0] == previousRoundHash && message[1] == previousRoundHash && message[2] == previousRoundHash
+                        && message[4] == previousRoundHash && message[5] == previousRoundHash) {
+                    System.out.println("RECIEVED POOR WALL MESSAGE");
+                    if (numDefenseLandscapers < numDefensiveSpaces) {
+                        state = 5;
+                        
+                        if (!currentLocation.isAdjacentTo(home)) {
+                            state = 6;
+                        }
+                    }
+                }
+            }
             
             
             
@@ -182,11 +204,9 @@ public strictfp class Landscaper extends RobotPlayer {
             if (!currentLocation.isAdjacentTo(home)) {
                 // Look for tiles with inaccessible elevation that aren't occupied
                 
-                boolean shouldLevel = false;
                 for (Direction dir : directions) {
                     MapLocation adj = home.add(dir);
                     if (currentLocation.isAdjacentTo(adj) && !isAccessible(adj) && !rc.isLocationOccupied(adj)) {
-                        shouldLevel = true;
                         System.out.println("FOUND TILES THAT SHOULD BE LEVELED");
                         
                         Direction levelDirection = currentLocation.directionTo(adj);
@@ -242,24 +262,16 @@ public strictfp class Landscaper extends RobotPlayer {
             
             else {
     
-                Transaction[] block = rc.getBlock(roundNum - 1);
-                
-                for (Transaction t : block) {
-                    int[] message = t.getMessage();
-                    int previousRoundHash = computeHashForRound(roundNum - 1);
-        
-                    if (message[0] == previousRoundHash && message[1] == previousRoundHash && message[2] == previousRoundHash
-                            && message[4] == previousRoundHash && message[5] == previousRoundHash) {
-                        System.out.println("RECIEVED POOR WALL MESSAGE");
-                        if (numDefenseLandscapers < numDefensiveSpaces) {
-                            state = 5;
-                        }
-                    }
-                }
-    
     
                 Direction hqDir = currentLocation.directionTo(home);
                 Direction dirtDir = hqDir.opposite();
+                
+                System.out.println("HQ DIR " + hqDir);
+                
+                if (hqDir == Direction.SOUTHEAST || hqDir == Direction.SOUTHWEST || hqDir == Direction.NORTHEAST || hqDir == Direction.NORTHWEST) {
+                    dirtDir = dirtDir.rotateRight().rotateRight();
+                    System.out.println("DIRTDIR " + dirtDir);
+                }
                 
                 // If HQ has dirt on it, dig it first
                 if (rc.canDigDirt(hqDir)) {
@@ -295,6 +307,7 @@ public strictfp class Landscaper extends RobotPlayer {
                     }
                 }
                 else {
+                    System.out.println("TRYING TO DIG DIRT");
                     // Try digging opposite to HQ - if not possible, look for other spaces
                     if (rc.canDigDirt(dirtDir)) {
                         rc.digDirt(dirtDir);
