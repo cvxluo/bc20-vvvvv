@@ -19,6 +19,8 @@ public strictfp class Landscaper extends RobotPlayer {
     static int landscapersByHQ;
     static int defensiveByHQ;
     
+    static boolean onTheLattice;
+    
     static boolean partOfDefense() {
         boolean isPart = false;
         if (rc.canSenseLocation(home)) {
@@ -201,8 +203,6 @@ public strictfp class Landscaper extends RobotPlayer {
                 if (rc.onTheMap(s)) adjDefense++;
             }
             
-            if (numFloodedTiles > 45 && landscapersByHQ < adjDefense) { state = 5; }
-    
             
             // Recieve poor wall message
             Transaction[] block = rc.getBlock(roundNum - 1);
@@ -221,13 +221,13 @@ public strictfp class Landscaper extends RobotPlayer {
                             state = 5;
         
                             if (!isDefending) {
-                                state = 6;
+                                state = 2;
                             }
                         }
                     }
                     
                     if (message[3] == previousRoundHash - 3 && !isDefending) {
-                        state = 6;
+                        state = 2;
                     }
                 }
             }
@@ -241,17 +241,32 @@ public strictfp class Landscaper extends RobotPlayer {
                 // Look for tiles with inaccessible elevation that aren't occupied
                 
                 for (MapLocation adj : getXShape(home)) {
-                    if (currentLocation.isAdjacentTo(adj) && !isAccessible(adj) && !rc.isLocationOccupied(adj)) {
+                    if (!rc.onTheMap(adj)) continue;
+                    
+                    // Kill self if stuck
+                    boolean isStuck = true;
+                    MapLocation[] surrounding = getSurrounding(currentLocation);
+                    for (MapLocation s : surrounding) {
+                        if (isAccessible(s)) { isStuck = false; break; }
+                    }
+                    if (isStuck) rc.disintegrate();
+                    
+                    
+                    if (rc.canSenseLocation(adj) && currentLocation.isAdjacentTo(adj) && !isAccessible(adj) && !rc.isLocationOccupied(adj)) {
                         System.out.println("FOUND TILES THAT SHOULD BE LEVELED");
-        
+                        
                         Direction levelDirection = currentLocation.directionTo(adj);
                         int adjElevation = rc.senseElevation(adj);
         
                         // Modify behavior if have to mine or have to dig to access tile
                         int dirtCarrying = rc.getDirtCarrying();
+                        
+                        System.out.println("MY ELE " + rc.senseElevation(currentLocation));
+                        System.out.println("ADJ ELE " + rc.senseElevation(adj));
         
                         // If level elevation is lower than current
                         if (adjElevation < rc.senseElevation(currentLocation)) {
+                            System.out.println("LOWER ELE, TRYING TO DEPOSIT DIRT");
                             // Deposit dirt if carrying - if not, look for a location to dig from
                             if (dirtCarrying > 0) {
                                 if (rc.canDepositDirt(levelDirection)) rc.depositDirt(levelDirection);
@@ -304,16 +319,22 @@ public strictfp class Landscaper extends RobotPlayer {
                     if (adj.equals(currentLocation)) { onPeriphery = false; break; }
                 }
                 
-                System.out.println("ON PERIPHERY " + onPeriphery);
-                
                 // If we're on the periphery, see if we can move into surrounding square before doing anything else
                 if (onPeriphery) {
                     MapLocation[] adjacents = getSurrounding(home);
                     for (MapLocation adj : adjacents) {
                         // This is glitchy - might die to rush
-                        if (rc.canSenseLocation(adj) && !rc.isLocationOccupied(adj)) {
-                            System.out.println("IN PERIPHERY ,TRY MOVING CLOSER");
-                            tryMovingTowards(home);
+                        if (rc.canSenseLocation(adj)) {
+                            if (rc.isLocationOccupied(adj)) {
+                                if (rc.senseRobotAtLocation(adj).getType() != RobotType.LANDSCAPER) {
+                                    System.out.println("IN PERIPHERY ,TRY MOVING CLOSER");
+                                    tryMovingTowards(home);
+                                }
+                            }
+                            else {
+                                System.out.println("IN PERIPHERY ,TRY MOVING CLOSER");
+                                tryMovingTowards(home);
+                            }
                         }
                     }
                 }
@@ -338,6 +359,15 @@ public strictfp class Landscaper extends RobotPlayer {
                     }
     
                     if (rc.getDirtCarrying() > 0) {
+                        
+                        // Check if there are buildings for us to kill
+                        RobotInfo[] nearbyEnemy = rc.senseNearbyRobots(1, rc.getTeam().opponent());
+                        for (RobotInfo enemy : nearbyEnemy) {
+                            if (enemy.getType() == RobotType.DESIGN_SCHOOL || enemy.getType() == RobotType.NET_GUN) {
+                                Direction enemyDir = currentLocation.directionTo(enemy.getLocation());
+                                if (rc.canDepositDirt(enemyDir)) rc.depositDirt(enemyDir);
+                            }
+                        }
         
                         // Check if nearby tiles have landscapers
                         int myElevation = rc.senseElevation(currentLocation);
@@ -368,13 +398,14 @@ public strictfp class Landscaper extends RobotPlayer {
                     else {
                         System.out.println("TRYING TO DIG DIRT");
                         // Try digging opposite to HQ - if not possible, look for other spaces
-                        if (rc.canDigDirt(dirtDir)) {
+                        if (rc.canDigDirt(dirtDir) && (!rc.isLocationOccupied(rc.adjacentLocation(dirtDir)) || turnCount > 200)) {
                             rc.digDirt(dirtDir);
                         }
                         else {
                             for (Direction dir : directions) {
                                 if (!currentLocation.add(dir).isAdjacentTo(home) && rc.canDigDirt(dir)) {
                                     dirtDir = dir;
+                                    if (rc.canDigDirt(dirtDir)) rc.digDirt(dirtDir);
                                 }
                             }
                         }
@@ -406,9 +437,18 @@ public strictfp class Landscaper extends RobotPlayer {
                     int myElevation = rc.senseElevation(currentLocation);
                     
                     if (rc.getDirtCarrying() > 0) {
+    
+                        // Check if there are buildings for us to kill
+                        RobotInfo[] nearbyEnemy = rc.senseNearbyRobots(1, rc.getTeam().opponent());
+                        for (RobotInfo enemy : nearbyEnemy) {
+                            if (enemy.getType() == RobotType.DESIGN_SCHOOL || enemy.getType() == RobotType.NET_GUN) {
+                                Direction enemyDir = currentLocation.directionTo(enemy.getLocation());
+                                if (rc.canDepositDirt(enemyDir)) rc.depositDirt(enemyDir);
+                            }
+                        }
                         
                         // First build ourselves up
-                        if (myElevation < 50) {
+                        if (myElevation < 75) {
                             if (rc.canDepositDirt(Direction.CENTER)) rc.depositDirt(Direction.CENTER);
                         }
                         else {
@@ -456,11 +496,7 @@ public strictfp class Landscaper extends RobotPlayer {
             // First, we have to check if we have dirt - if we don't, grab some
             if (rc.getDirtCarrying() == 0) {
                 Direction dirtDir = hqDir.opposite();
-    
-                // If HQ has dirt on it, dig it first
-                if (rc.canDigDirt(hqDir)) {
-                    rc.digDirt(hqDir);
-                }
+                
     
                 // Try digging opposite to HQ - if not possible, look for other spaces
                 if (rc.canDigDirt(dirtDir)) {
@@ -482,6 +518,7 @@ public strictfp class Landscaper extends RobotPlayer {
                 // First check if the wall is evenly built at all
                 Direction left = hqDir.rotateLeft();
                 Direction right = hqDir.rotateRight();
+                
                 
                 /*
                 boolean foundInaccessible = false;
@@ -507,7 +544,7 @@ public strictfp class Landscaper extends RobotPlayer {
                 }
                 
                 */
-    
+                
                 // If we are on a cardinal tile, we need to check 4 spaces
                 if (hqDir == Direction.NORTH || hqDir == Direction.SOUTH || hqDir == Direction.EAST || hqDir == Direction.WEST) {
                     MapLocation leftLocation = rc.adjacentLocation(left);
@@ -605,6 +642,11 @@ public strictfp class Landscaper extends RobotPlayer {
                 
             }
             
+        }
+        
+        
+        if (state == 6) {
+            // absolute sad reacts here lmao
         }
         
     }

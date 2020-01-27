@@ -126,11 +126,7 @@ public strictfp class HQ extends RobotPlayer {
             System.out.println("LANDSCAPERS DETECTED " + landscapersDetected);
             System.out.println("NUM LANDSDCAPERS SRU " + numLandscapersSurrounding);
             
-            // If we already have 8 landscapers, don't do anything
-            if (landscapersDetected >= 8) {
-                roundsSinceLastLandscaper = 0;
-            }
-            else if (landscapersDetected > numLandscapersSurrounding) {
+            if (landscapersDetected > numLandscapersSurrounding) {
                 numLandscapersSurrounding = landscapersDetected;
                 roundsSinceLastLandscaper = 0;
             }
@@ -170,8 +166,20 @@ public strictfp class HQ extends RobotPlayer {
                 sentPanicMessage = true;
                 rc.submitTransaction(message, 1);
                 System.out.println("SUBMITTED PANIC");
+                System.out.println("SUBMITTED PANIC");
+    
+                System.out.println("SUBMITTED PANIC");
+    
+                System.out.println("SUBMITTED PANIC");
+                System.out.println("SUBMITTED PANIC");
+    
+                System.out.println("SUBMITTED PANIC");
+    
             }
         }
+        
+        System.out.println("ROUNDS SINCE LAST LANDSCAPER " + roundsSinceLastLandscaper);
+        System.out.println("HAS SENT PANIC " + sentPanicMessage);
         
         
         boolean shouldBuildAnother = false;
