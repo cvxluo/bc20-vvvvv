@@ -247,7 +247,7 @@ public strictfp class Landscaper extends RobotPlayer {
                     boolean isStuck = true;
                     MapLocation[] surrounding = getSurrounding(currentLocation);
                     for (MapLocation s : surrounding) {
-                        if (isAccessible(s)) { isStuck = false; break; }
+                        if (rc.onTheMap(s) && isAccessible(s)) { isStuck = false; break; }
                     }
                     if (isStuck) rc.disintegrate();
                     
