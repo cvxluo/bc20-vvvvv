@@ -434,6 +434,19 @@ public strictfp class Landscaper extends RobotPlayer {
                         dirtDir = currentLocation.directionTo(lowestTile);
                     }
                     
+                    // if there's a building we would be blocked by move
+                    else {
+                        MapLocation dirtTile = rc.adjacentLocation(dirtDir);
+                        if (rc.isLocationOccupied(dirtTile)) {
+                            RobotInfo r = rc.senseRobotAtLocation(dirtTile);
+                            if (r.getType() == RobotType.DESIGN_SCHOOL || r.getType() == RobotType.FULFILLMENT_CENTER || r.getType() == RobotType.NET_GUN) {
+                                dirtDir = dirtDir.rotateLeft();
+                                // this will probably break and lose us a critical match
+                                // and if it does ill be so upset
+                            }
+                        }
+                    }
+                    
                     int myElevation = rc.senseElevation(currentLocation);
                     
                     if (rc.getDirtCarrying() > 0) {
@@ -615,7 +628,7 @@ public strictfp class Landscaper extends RobotPlayer {
                         if (rc.canDepositDirt(dirToLowest)) rc.depositDirt(dirToLowest);
                     }
                     // If it's not worth moving, just fill in my space
-                    else if (lowestEle < rc.senseElevation(currentLocation) - 5) {
+                    else if (lowestEle > rc.senseElevation(currentLocation) - 5) {
                         if (rc.canDepositDirt(Direction.CENTER)) rc.depositDirt(Direction.CENTER);
                     }
                     else {
