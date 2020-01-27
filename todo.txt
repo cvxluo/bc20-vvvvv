@@ -3,11 +3,19 @@ REMEMBER TO REMOVE OUTPUT BEFORE SUBMITTING
 REMEMBER TO REMOVE OUTPUT BEFORE SUBMITTING
 REMEMBER TO REMOVE OUTPUT BEFORE SUBMITTING
 
+Optimization:
+- maybe refactor MapLocation shape getting into plain arrays to reduce bytecode
+- compute partOfDefense for landscapers only once
 
 General:
 - Bad building code for miners - just randomly set up stuff, should be around the base
 - LANDSCAPERS THAT SPAWN AFTER POOR WALL MESSAGE WILL TRY TO LEVEL THE WALL
+- LANDSCAPERS THAT ARE ON THE WALL SHOULD KILL ANY BUILDINGS NEXT TO IT
 - NEED CRUNCH CODE
 - LANDSCAPERS THAT ARE PART OF THE WALL SHOULD HELP MAKE OTHER WALL TILES ACCESSIBLE FOR OTHER LANDSCAPERS
+- Redo defensive spaces calculation
+- ON STATE 5 SHOULD EVENLY DO ADJACENT STUFF SO WE DON'T LET FLOODING IN TOO EARLY
 - NEED FUNCTIONS FOR DECIDING WHEN TO BUILD THINGS - tuning is becoming an issue
 - Improve drone stuff so it remembers where some flooded tiles are - and communication for those tiles
+- Rewrite pathing to deal with our own units
+- Revise miner building protocols for lattice

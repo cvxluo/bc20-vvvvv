@@ -43,7 +43,7 @@ HQ message is composed of
     - HQ Location X2
     - HQ Location Y2
     - Identifier value - just change every competition
-    - HQ ID
+    - Number of defensive spaces
 
 
 For miner soup communication:
@@ -66,11 +66,12 @@ For HQ surrounded by water and landscaper should start rotating communication:
 
 For constant 10 turn communication
     - Hashed ID value
-    - Soup Location X1
-    - Soup Location Y1
-    - Hashed ID value - this repeat indicates that the value came from a miner
-    - Miner Location X2
-    - Miner Location Y2
+    - Number of defensive landscapers
+    - 5 - maybe defensive drones or lattice status? - currently working as an identifier
+    - 0 if panic message has been sent, hashedID - 3 if not
+    - Current Location X
+    - Current Location Y
+    - Unit ID
 
 Things that should be communicated:
     - Soup locations

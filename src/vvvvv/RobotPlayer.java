@@ -23,6 +23,12 @@ public strictfp class RobotPlayer {
             Direction.CENTER,
         
     };
+    
+    static Direction[] diagonals = {
+            Direction.NORTHWEST, Direction.NORTHEAST, Direction.SOUTHWEST, Direction.SOUTHEAST,
+    };
+    
+    
     static RobotType[] spawnedByMiner = {RobotType.REFINERY, RobotType.VAPORATOR, RobotType.DESIGN_SCHOOL,
             RobotType.FULFILLMENT_CENTER, RobotType.NET_GUN};
     
@@ -158,7 +164,7 @@ public strictfp class RobotPlayer {
         
         System.out.println("GOAL IN DIRECTION " + dirToMove);
 
-        if (!rc.isReady()) Clock.yield();
+        if (!rc.isReady()) return false;
         
         if (rc.canMove(dirToMove) && !rc.senseFlooding(nextStep)) {
             beingBlocked = 0;
@@ -422,10 +428,59 @@ public strictfp class RobotPlayer {
         return (loc.x - x) % 2 == 0 && (loc.y - y) % 2 == 0;
     }
     
+    // Get all MapLocations surrounding a center
+    static MapLocation[] getSurrounding(MapLocation center) {
+        MapLocation[] locs = new MapLocation[8];
+        int i = 0;
+        for (Direction dir : directions) {
+            locs[i] = center.add(dir);
+            i++;
+        }
+        return locs;
+    }
+    
+    
+    // Get all MapLocations in the X shape around a center
+    
+    /**
+     * The X shape
+     * O O   O O
+     * O O O O O
+     *   O X O
+     * O O O O O
+     * O O   O O
+     *
+     *
+     *
+     */
+    static MapLocation[] getXShape(MapLocation center) {
+        MapLocation[] locs = new MapLocation[20];
+        int i = 0;
+        for (Direction dir : directions) {
+            locs[i] = center.add(dir);
+            i++;
+        }
+        
+
+        for (Direction dir : diagonals) {
+            MapLocation diag = center.add(dir);
+            
+            Direction left = dir.rotateLeft();
+            Direction right = dir.rotateRight();
+            
+            locs[i++] = diag.add(left);
+            locs[i++] = diag.add(dir);
+            locs[i++] = diag.add(right);
+        }
+        
+        return locs;
+    }
     
     // Checks whether goal is currently within elevation limits
     // Does not check whether the location is in sensor radius
     static boolean isAccessible(MapLocation goal) throws GameActionException { return Math.abs(rc.senseElevation(goal) - rc.senseElevation(rc.getLocation())) <= 3; }
+    static boolean isAccessible(MapLocation start, MapLocation finish) throws GameActionException { return Math.abs(rc.senseElevation(start) - rc.senseElevation(finish)) <= 3; }
     
-
+    
+    
 }

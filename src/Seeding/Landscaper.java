@@ -17,8 +17,8 @@ import battlecode.common.*;
 public strictfp class Landscaper extends RobotPlayer {
     
     static void runLandscaper() throws GameActionException {
-        System.out.println("DESTINATION " + destination);
-        System.out.println("STATE " + state);
+        // System.out.println("DESTINATION " + destination);
+        // System.out.println("STATE " + state);
         
         updateHashToRound(Math.max(1, roundNum - 20));
     
@@ -52,7 +52,7 @@ public strictfp class Landscaper extends RobotPlayer {
                     if (!explored[i]) { nextQ = i; foundNextQ = true; break; }
                 }
                 if (!foundNextQ) { explored = new boolean[5]; nextQ = quadrant; }
-                System.out.println("NEXT Q " + nextQ);
+                // System.out.println("NEXT Q " + nextQ);
                 destination = getQuadrantCorner(nextQ);
                 
             }
@@ -60,7 +60,7 @@ public strictfp class Landscaper extends RobotPlayer {
             RobotInfo[] robots = rc.senseNearbyRobots(-1, enemy);
             for (RobotInfo robot : robots) {
                 if (robot.getType().isBuilding()) {
-                    System.out.println("DETECTED BUILDING TO FIGHT");
+                    // System.out.println("DETECTED BUILDING TO FIGHT");
                     destination = robot.getLocation();
                     state = 2;
                     break;
@@ -156,8 +156,8 @@ public strictfp class Landscaper extends RobotPlayer {
                     }
                 }
         
-                System.out.println("DEFENSIVE LANDSCAPERS " + numDefenseLandscapers);
-                System.out.println("DEFENSIVE SPACES " + numDefensiveSpaces);
+                // System.out.println("DEFENSIVE LANDSCAPERS " + numDefenseLandscapers);
+                // System.out.println("DEFENSIVE SPACES " + numDefensiveSpaces);
                 if (numDefenseLandscapers >= numDefensiveSpaces && !currentLocation.isAdjacentTo(home)) {
                     state = 1;
                 }
@@ -177,7 +177,7 @@ public strictfp class Landscaper extends RobotPlayer {
             
             
             
-            System.out.println("COOLDOWN " + rc.getCooldownTurns());
+            // System.out.println("COOLDOWN " + rc.getCooldownTurns());
     
             if (!currentLocation.isAdjacentTo(home)) {
                 // Look for tiles with inaccessible elevation that aren't occupied
@@ -187,7 +187,7 @@ public strictfp class Landscaper extends RobotPlayer {
                     MapLocation adj = home.add(dir);
                     if (currentLocation.isAdjacentTo(adj) && !isAccessible(adj) && !rc.isLocationOccupied(adj)) {
                         shouldLevel = true;
-                        System.out.println("FOUND TILES THAT SHOULD BE LEVELED");
+                        // System.out.println("FOUND TILES THAT SHOULD BE LEVELED");
                         
                         Direction levelDirection = currentLocation.directionTo(adj);
                         int adjElevation = rc.senseElevation(adj);
@@ -250,7 +250,7 @@ public strictfp class Landscaper extends RobotPlayer {
         
                     if (message[0] == previousRoundHash && message[1] == previousRoundHash && message[2] == previousRoundHash
                             && message[4] == previousRoundHash && message[5] == previousRoundHash) {
-                        System.out.println("RECIEVED POOR WALL MESSAGE");
+                        // System.out.println("RECIEVED POOR WALL MESSAGE");
                         if (numDefenseLandscapers < numDefensiveSpaces) {
                             state = 5;
                         }
@@ -317,7 +317,7 @@ public strictfp class Landscaper extends RobotPlayer {
             RobotInfo[] robots = rc.senseNearbyRobots(-1, enemy);
             for (RobotInfo robot : robots) {
                 if (robot.getType().isBuilding()) {
-                    System.out.println("DETECTED BUILDING TO FIGHT");
+                    // System.out.println("DETECTED BUILDING TO FIGHT");
                     destination = robot.getLocation();
                     state = 2;
                     break;
@@ -346,8 +346,8 @@ public strictfp class Landscaper extends RobotPlayer {
                     }
                 }
     
-                System.out.println("DEFENSIVE LANDSCAPERS " + numDefenseLandscapers);
-                System.out.println("DEFENSIVE SPACES " + numDefensiveSpaces);
+                // System.out.println("DEFENSIVE LANDSCAPERS " + numDefenseLandscapers);
+                // System.out.println("DEFENSIVE SPACES " + numDefensiveSpaces);
                 if (numDefenseLandscapers < numDefensiveSpaces) {
                     state = 3;
                 }
@@ -461,8 +461,8 @@ public strictfp class Landscaper extends RobotPlayer {
                     Direction dirToLowestAdj = currentLocation.directionTo(lowestAdjLoc);
     
     
-                    System.out.println("LOWEST LOC " + lowestLoc);
-                    System.out.println("DIR TO LOWEST LOC " + dirToLowest);
+                    // System.out.println("LOWEST LOC " + lowestLoc);
+                    // System.out.println("DIR TO LOWEST LOC " + dirToLowest);
     
     
                     if (currentLocation.isAdjacentTo(lowestLoc)) {

@@ -10,35 +10,21 @@ public strictfp class HQ extends RobotPlayer {
     static int numLandscapersSurrounding;
     static int roundsSinceLastLandscaper;
     
-    static int lastRegularBroadcast;
+    static int numDefensiveSpaces;
     
     static void runHQ() throws GameActionException {
         
         if (turnCount == 1) {
-            
-            // TODO: Optimize this
-            /*
-            LinkedList<MapLocation> soups = new LinkedList<MapLocation>();
-            for (int x = 0; x < mapWidth; x++) {
-                for (int y = 0; y < mapHeight; y++) {
-                    MapLocation loc = new MapLocation(x, y);
-                    if (rc.canSenseLocation(loc)) {
-                        if (rc.senseSoup(loc) != 0) { soups.add(loc); }
-                    }
-                }
-            }
-            */
             
             
             sentPanicMessage = false;
             soupsFound = 0;
             numLandscapersSurrounding = 0;
             roundsSinceLastLandscaper = 0;
-            lastRegularBroadcast = 0;
             
-            // kinda bad also should optimize
             MapLocation home = currentLocation;
             
+            // Find closest soup
             MapLocation[] soupLocations = rc.senseNearbySoup();
             int numSoups = soupLocations.length;
             int totalSoup = 0;
@@ -56,6 +42,16 @@ public strictfp class HQ extends RobotPlayer {
             }
             
             System.out.println("SOUP " + soupLocation);
+            
+            // Find number of defensive spaces - spaces that landscapers should be on
+            // Bad, since it doesn't check if the wall is completed - should revise
+            MapLocation[] x = getXShape(currentLocation);
+            numDefensiveSpaces = 0;
+            for (MapLocation loc : x) {
+                if (rc.onTheMap(loc) && !rc.senseFlooding(loc)) numDefensiveSpaces++;
+            }
+            
+            
             int[] message = new int[7];
             
             // Creating a key for the later hashing
@@ -74,12 +70,15 @@ public strictfp class HQ extends RobotPlayer {
             message[4] = currentLocation.y;
             
             message[5] = 1919191;
-            message[6] = rc.getID();
+            message[6] = numDefensiveSpaces;
             
             if (rc.canSubmitTransaction(message, 30)) {
                 rc.submitTransaction(message, 30);
                 System.out.println("SUCCESSFULLY SUBMITTED TRANSACTION");
             }
+            
+            
+ 
         }
     
         updateHashToRound(Math.max(1, roundNum - 20));
@@ -111,11 +110,11 @@ public strictfp class HQ extends RobotPlayer {
 
     
         int landscapersDetected = 0;
-    
-        for (Direction dir : directions) {
-            MapLocation adj = rc.adjacentLocation(dir);
-            if (rc.canSenseLocation(adj) && rc.isLocationOccupied(adj)) {
-                RobotInfo r = rc.senseRobotAtLocation(adj);
+        
+        MapLocation[] xshape = getXShape(currentLocation);
+        for (MapLocation loc : xshape) {
+            if (rc.canSenseLocation(loc) && rc.isLocationOccupied(loc)) {
+                RobotInfo r = rc.senseRobotAtLocation(loc);
                 if (r.getType() == RobotType.LANDSCAPER && rc.getTeam() == r.getTeam()) {
                     landscapersDetected++;
                 }
@@ -128,7 +127,7 @@ public strictfp class HQ extends RobotPlayer {
             System.out.println("NUM LANDSDCAPERS SRU " + numLandscapersSurrounding);
             
             // If we already have 8 landscapers, don't do anything
-            if (landscapersDetected == 8) {
+            if (landscapersDetected >= 8) {
                 roundsSinceLastLandscaper = 0;
             }
             else if (landscapersDetected > numLandscapersSurrounding) {
@@ -197,9 +196,28 @@ public strictfp class HQ extends RobotPlayer {
         
         
         // Regularly broadcast updates on information
-        lastRegularBroadcast++;
-        if (lastRegularBroadcast >= 10) {
-            lastRegularBroadcast = 0;
+        if (roundNum % 10 == 0) {
+            int[] message = new int[7];
+            int currentHash = computeHashForCurrentRound();
+    
+            message[0] = currentHash; // Identifier
+            
+            message[1] = landscapersDetected;
+            
+            message[2] = 5;
+            
+            if (sentPanicMessage) message[3] = currentHash - 3;
+            else message[3] = 0;
+            
+            message[4] = currentLocation.x;
+            message[5] = currentLocation.y;
+            
+            message[6] = rc.getID();
+    
+            if (rc.canSubmitTransaction(message, 1)) {
+                rc.submitTransaction(message, 1);
+                System.out.println("SUCCESSFULLY SUBMITTED REGULAR MESSAGE");
+            }
             
         }
         
