@@ -6,11 +6,11 @@ public strictfp class Miner extends RobotPlayer {
     static void runMiner() throws GameActionException {
         
         int roundNum = rc.getRoundNum();
-        System.out.println("STATE " + state);
-        System.out.println("DESTINATION " + destination);
-        System.out.println("HOME " + home);
+        // System.out.println("STATE " + state);
+        // System.out.println("DESTINATION " + destination);
+        // System.out.println("HOME " + home);
         
-        System.out.println("CURRENT HASH " + computeHashForCurrentRound());
+        // System.out.println("CURRENT HASH " + computeHashForCurrentRound());
     
         if (turnCount == 1) { // Setup stuff
             
@@ -43,7 +43,7 @@ public strictfp class Miner extends RobotPlayer {
         
             if (message[0] == previousRoundHash && message[1] == previousRoundHash && message[2] == previousRoundHash
                     && message[4] == previousRoundHash && message[5] == previousRoundHash) {
-                System.out.println("RECIEVED POOR WALL MESSAGE");
+                // System.out.println("RECIEVED POOR WALL MESSAGE");
                 
                 if (currentLocation.distanceSquaredTo(hqLocation) < 12) {
                     rc.disintegrate();
@@ -164,7 +164,7 @@ public strictfp class Miner extends RobotPlayer {
         }
         
         if (state == 2) {
-            System.out.println("CARRYING " + rc.getSoupCarrying());
+            // System.out.println("CARRYING " + rc.getSoupCarrying());
             
             if (rc.getSoupCarrying() == 100) {
                 state = 3;
@@ -291,7 +291,7 @@ public strictfp class Miner extends RobotPlayer {
     
                 for (Direction dir : directions) {
                     if (rc.canDepositSoup(dir)) {
-                        System.out.println("DEPOSIT");
+                        // System.out.println("DEPOSIT");
                         state = 1;
                         rc.depositSoup(dir, 100);
                     }
@@ -338,40 +338,40 @@ public strictfp class Miner extends RobotPlayer {
                 }
             }
     
-            System.out.println("NUM SOUPS FOUND " + numSoups);
+            // System.out.println("NUM SOUPS FOUND " + numSoups);
     
     
     
             if (numSoups == 0) {
                 
-                System.out.println("FOUND NO SOUPS, TRYING LAST ROUNDS MESSAGES");
+                // System.out.println("FOUND NO SOUPS, TRYING LAST ROUNDS MESSAGES");
                 
                 // Check only previous round's messages to see if soup has been found
                 Transaction[] block = rc.getBlock(roundNum - 1);
                 
-                System.out.println("GETTING BLOCK " + (roundNum - 1));
+                // System.out.println("GETTING BLOCK " + (roundNum - 1));
                 
                 
                 boolean newSoupFound = false;
                 for (Transaction t : block) {
                     int[] message = t.getMessage();
-                    System.out.println("MESSAGE 0 " + message[0]);
+                    // System.out.println("MESSAGE 0 " + message[0]);
                     int previousRoundHash = computeHashForRound(roundNum - 1);
-                    System.out.println("PREVIOUS ROUND HASH " + previousRoundHash);
+                    // System.out.println("PREVIOUS ROUND HASH " + previousRoundHash);
                     
                     if (message[0] == previousRoundHash && message[3] == previousRoundHash) {
-                        System.out.println("SOMEONE ELSE FOUND SOUP");
+                        // System.out.println("SOMEONE ELSE FOUND SOUP");
                         destination = new MapLocation(message[1], message[2]);
                         newSoupFound = true;
                     }
                 }
                 
                 if (!newSoupFound) {
-                    System.out.println("EXPLROED");
+                    // System.out.println("EXPLROED");
                     for (int i = 0; i < 5; i++) {
                         System.out.print(explored[i] + " ");
                     }
-                    System.out.println();
+                    // System.out.println();
     
                     if (rc.canSenseLocation(destination)) {
                         int quadrant = findQuadrant(currentLocation);
@@ -381,7 +381,7 @@ public strictfp class Miner extends RobotPlayer {
                         for (int i = 1; i < 5; i++) {
                             if (!explored[i]) { nextQ = i; foundNextQ = true; break; }
                         }
-                        System.out.println("NEXT Q " + nextQ);
+                        // System.out.println("NEXT Q " + nextQ);
                         if (!foundNextQ) { explored = new boolean[5]; nextQ = quadrant; }
                         destination = getQuadrantCorner(nextQ);
                     }
@@ -406,7 +406,7 @@ public strictfp class Miner extends RobotPlayer {
                 
                 if (rc.canSubmitTransaction(message, 1)) {
                     rc.submitTransaction(message, 1);
-                    System.out.println("SUBMITTED FOUND SOUP LOCATION");
+                    // System.out.println("SUBMITTED FOUND SOUP LOCATION");
                 }
     
                 state = 1;
@@ -444,10 +444,10 @@ public strictfp class Miner extends RobotPlayer {
             tryBuild(RobotType.FULFILLMENT_CENTER, dir);
         for (Direction dir : directions)
             if (tryRefine(dir))
-                System.out.println("I refined soup! " + rc.getTeamSoup());
+                // System.out.println("I refined soup! " + rc.getTeamSoup());
         for (Direction dir : directions)
             if (tryMine(dir))
-                System.out.println("I mined soup! " + rc.getSoupCarrying());
+                // System.out.println("I mined soup! " + rc.getSoupCarrying());
                 
                 */
     }

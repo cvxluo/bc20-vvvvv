@@ -118,14 +118,14 @@ public strictfp class RobotPlayer {
         explored = new boolean[5];
         beingBlocked = 0;
 
-        System.out.println("I'm a " + rc.getType() + " and I just got created at " + rc.getLocation());
+        // System.out.println("I'm a " + rc.getType() + " and I just got created at " + rc.getLocation());
         while (true) {
             turnCount += 1;
             // Try/catch blocks stop unhandled exceptions, which cause your robot to explode
             try {
                 // Here, we've separated the controls into a different method for each RobotType.
                 // You can add the missing ones or rewrite this into your own control structure.
-                System.out.println("I'm a " + rc.getType() + "! Location " + rc.getLocation());
+                // System.out.println("I'm a " + rc.getType() + "! Location " + rc.getLocation());
                 
                 currentLocation = rc.getLocation();
                 roundNum = rc.getRoundNum();
@@ -146,7 +146,7 @@ public strictfp class RobotPlayer {
                 Clock.yield();
 
             } catch (Exception e) {
-                System.out.println(rc.getType() + " Exception");
+                // System.out.println(rc.getType() + " Exception");
                 e.printStackTrace();
             }
         }
@@ -162,7 +162,7 @@ public strictfp class RobotPlayer {
         Direction dirToMove = currentLocation.directionTo(goal);
         MapLocation nextStep = rc.adjacentLocation(dirToMove);
         
-        System.out.println("GOAL IN DIRECTION " + dirToMove);
+        // System.out.println("GOAL IN DIRECTION " + dirToMove);
 
         if (!rc.isReady()) return false;
         
@@ -173,8 +173,8 @@ public strictfp class RobotPlayer {
         
         else {
             
-            System.out.println("BLOCKED");
-            System.out.println(beingBlocked);
+            // System.out.println("BLOCKED");
+            // System.out.println(beingBlocked);
             Direction left = dirToMove;
             Direction right = dirToMove;
             
@@ -184,9 +184,9 @@ public strictfp class RobotPlayer {
                     left = left.rotateLeft();
                     MapLocation nextLeft = rc.adjacentLocation(left);
                     
-                    System.out.println("IN LEFT FOLLOWING");
-                    System.out.println("TRYING " + left);
-                    System.out.println("IN LOCATION " + nextLeft);
+                    // System.out.println("IN LEFT FOLLOWING");
+                    // System.out.println("TRYING " + left);
+                    // System.out.println("IN LOCATION " + nextLeft);
                     
                     if (!rc.onTheMap(nextLeft)) { beingBlocked = 2; break; }
                     
@@ -203,9 +203,9 @@ public strictfp class RobotPlayer {
                     right = right.rotateRight();
                     MapLocation nextRight = rc.adjacentLocation(right);
     
-                    System.out.println("IN RIGHT FOLLOWING");
-                    System.out.println("TRYING " + right);
-                    System.out.println("IN LOCATION " + nextRight);
+                    // System.out.println("IN RIGHT FOLLOWING");
+                    // System.out.println("TRYING " + right);
+                    // System.out.println("IN LOCATION " + nextRight);
     
                     if (!rc.onTheMap(nextRight)) { beingBlocked = 1; break; }
                     
@@ -226,10 +226,10 @@ public strictfp class RobotPlayer {
                     MapLocation nextLeft = rc.adjacentLocation(left);
                     MapLocation nextRight = rc.adjacentLocation(right);
     
-                    System.out.println("TRYING " + left);
-                    System.out.println("TRYING " + right);
-                    System.out.println("IN LOCATION " + nextLeft);
-                    System.out.println("IN LOCATION " + nextRight);
+                    // System.out.println("TRYING " + left);
+                    // System.out.println("TRYING " + right);
+                    // System.out.println("IN LOCATION " + nextLeft);
+                    // System.out.println("IN LOCATION " + nextRight);
     
     
     
@@ -272,7 +272,7 @@ public strictfp class RobotPlayer {
             }
     
             else {
-                System.out.println("BLOCKED");
+                // System.out.println("BLOCKED");
                 Direction left = dirToMove;
                 Direction right = dirToMove;
         
@@ -305,13 +305,13 @@ public strictfp class RobotPlayer {
     
     // Find first message by its contents
     static int[] findFirstMessageByContent(int check, int index) throws GameActionException {
-        System.out.println("FIRST MESSAGE BY CONTENT CALLED");
-        System.out.println(roundNum);
+        // System.out.println("FIRST MESSAGE BY CONTENT CALLED");
+        // System.out.println(roundNum);
         
         for (int i = 1; i < roundNum; i++) {
             Transaction[] block = rc.getBlock(i);
             
-            System.out.println("CHECKING BLOCK " + i);
+            // System.out.println("CHECKING BLOCK " + i);
             
             for (Transaction t : block) {
                 int[] message = t.getMessage();

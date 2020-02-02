@@ -39,11 +39,11 @@ public strictfp class Landscaper extends RobotPlayer {
     }
     
     static void runLandscaper() throws GameActionException {
-        System.out.println("DESTINATION " + destination);
-        System.out.println("STATE " + state);
+        // System.out.println("DESTINATION " + destination);
+        // System.out.println("STATE " + state);
         
-        System.out.println("LANDSCAPERS BY HQ " + landscapersByHQ);
-        System.out.println("DEFENSIVE BY HQ " + defensiveByHQ);
+        // System.out.println("LANDSCAPERS BY HQ " + landscapersByHQ);
+        // System.out.println("DEFENSIVE BY HQ " + defensiveByHQ);
     
         updateHashToRound(Math.max(1, roundNum - 20));
     
@@ -91,7 +91,7 @@ public strictfp class Landscaper extends RobotPlayer {
                     if (!explored[i]) { nextQ = i; foundNextQ = true; break; }
                 }
                 if (!foundNextQ) { explored = new boolean[5]; nextQ = quadrant; }
-                System.out.println("NEXT Q " + nextQ);
+                // System.out.println("NEXT Q " + nextQ);
                 destination = getQuadrantCorner(nextQ);
                 
             }
@@ -99,7 +99,7 @@ public strictfp class Landscaper extends RobotPlayer {
             RobotInfo[] robots = rc.senseNearbyRobots(-1, enemy);
             for (RobotInfo robot : robots) {
                 if (robot.getType().isBuilding()) {
-                    System.out.println("DETECTED BUILDING TO FIGHT");
+                    // System.out.println("DETECTED BUILDING TO FIGHT");
                     destination = robot.getLocation();
                     state = 2;
                     break;
@@ -214,7 +214,7 @@ public strictfp class Landscaper extends RobotPlayer {
                 if (message[0] == previousRoundHash) {
                     if (message[1] == previousRoundHash && message[2] == previousRoundHash
                             && message[4] == previousRoundHash && message[5] == previousRoundHash) {
-                        System.out.println("RECIEVED POOR WALL MESSAGE");
+                        // System.out.println("RECIEVED POOR WALL MESSAGE");
     
                         // If there are enough defensive landscapers already, just keep going
                         if (landscapersByHQ < adjDefense) {
@@ -234,8 +234,8 @@ public strictfp class Landscaper extends RobotPlayer {
             
             
             
-            System.out.println("COOLDOWN " + rc.getCooldownTurns());
-            System.out.println("PART OF DEFENSE " + isDefending);
+            // System.out.println("COOLDOWN " + rc.getCooldownTurns());
+            // System.out.println("PART OF DEFENSE " + isDefending);
     
             if (!isDefending) {
                 // Look for tiles with inaccessible elevation that aren't occupied
@@ -253,7 +253,7 @@ public strictfp class Landscaper extends RobotPlayer {
                     
                     
                     if (rc.canSenseLocation(adj) && currentLocation.isAdjacentTo(adj) && !isAccessible(adj) && !rc.isLocationOccupied(adj)) {
-                        System.out.println("FOUND TILES THAT SHOULD BE LEVELED");
+                        // System.out.println("FOUND TILES THAT SHOULD BE LEVELED");
                         
                         Direction levelDirection = currentLocation.directionTo(adj);
                         int adjElevation = rc.senseElevation(adj);
@@ -261,12 +261,12 @@ public strictfp class Landscaper extends RobotPlayer {
                         // Modify behavior if have to mine or have to dig to access tile
                         int dirtCarrying = rc.getDirtCarrying();
                         
-                        System.out.println("MY ELE " + rc.senseElevation(currentLocation));
-                        System.out.println("ADJ ELE " + rc.senseElevation(adj));
+                        // System.out.println("MY ELE " + rc.senseElevation(currentLocation));
+                        // System.out.println("ADJ ELE " + rc.senseElevation(adj));
         
                         // If level elevation is lower than current
                         if (adjElevation < rc.senseElevation(currentLocation)) {
-                            System.out.println("LOWER ELE, TRYING TO DEPOSIT DIRT");
+                            // System.out.println("LOWER ELE, TRYING TO DEPOSIT DIRT");
                             // Deposit dirt if carrying - if not, look for a location to dig from
                             if (dirtCarrying > 0) {
                                 if (rc.canDepositDirt(levelDirection)) rc.depositDirt(levelDirection);
@@ -327,12 +327,12 @@ public strictfp class Landscaper extends RobotPlayer {
                         if (rc.canSenseLocation(adj)) {
                             if (rc.isLocationOccupied(adj)) {
                                 if (rc.senseRobotAtLocation(adj).getType() != RobotType.LANDSCAPER) {
-                                    System.out.println("IN PERIPHERY ,TRY MOVING CLOSER");
+                                    // System.out.println("IN PERIPHERY ,TRY MOVING CLOSER");
                                     tryMovingTowards(home);
                                 }
                             }
                             else {
-                                System.out.println("IN PERIPHERY ,TRY MOVING CLOSER");
+                                // System.out.println("IN PERIPHERY ,TRY MOVING CLOSER");
                                 tryMovingTowards(home);
                             }
                         }
@@ -344,12 +344,12 @@ public strictfp class Landscaper extends RobotPlayer {
                 
                 // Should rework this code - mostly a remenent of the old stuff
                 if (!onPeriphery) {
-                    System.out.println("HQ DIR " + hqDir);
+                    // System.out.println("HQ DIR " + hqDir);
     
                     // If we're a corner landscaper, dig in an appropriate spot
                     if (hqDir == Direction.SOUTHEAST || hqDir == Direction.SOUTHWEST || hqDir == Direction.NORTHEAST || hqDir == Direction.NORTHWEST) {
                         dirtDir = dirtDir.rotateRight().rotateRight();
-                        System.out.println("DIRTDIR " + dirtDir);
+                        // System.out.println("DIRTDIR " + dirtDir);
                     }
     
                     // If HQ has dirt on it, dig it first
@@ -396,7 +396,7 @@ public strictfp class Landscaper extends RobotPlayer {
                         }
                     }
                     else {
-                        System.out.println("TRYING TO DIG DIRT");
+                        // System.out.println("TRYING TO DIG DIRT");
                         // Try digging opposite to HQ - if not possible, look for other spaces
                         if (rc.canDigDirt(dirtDir) && (!rc.isLocationOccupied(rc.adjacentLocation(dirtDir)) || turnCount > 200)) {
                             rc.digDirt(dirtDir);
@@ -483,7 +483,7 @@ public strictfp class Landscaper extends RobotPlayer {
             RobotInfo[] robots = rc.senseNearbyRobots(-1, enemy);
             for (RobotInfo robot : robots) {
                 if (robot.getType().isBuilding()) {
-                    System.out.println("DETECTED BUILDING TO FIGHT");
+                    // System.out.println("DETECTED BUILDING TO FIGHT");
                     destination = robot.getLocation();
                     state = 2;
                     break;
@@ -620,8 +620,8 @@ public strictfp class Landscaper extends RobotPlayer {
                     Direction dirToLowestAdj = currentLocation.directionTo(lowestAdjLoc);
     
     
-                    System.out.println("LOWEST LOC " + lowestLoc);
-                    System.out.println("DIR TO LOWEST LOC " + dirToLowest);
+                    // System.out.println("LOWEST LOC " + lowestLoc);
+                    // System.out.println("DIR TO LOWEST LOC " + dirToLowest);
                     
     
                     if (currentLocation.isAdjacentTo(lowestLoc)) {

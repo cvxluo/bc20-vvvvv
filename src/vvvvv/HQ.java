@@ -30,7 +30,7 @@ public strictfp class HQ extends RobotPlayer {
             int totalSoup = 0;
     
             numToBuild = numSoups;
-            System.out.println("NUM MINERS TO BUILD " + numToBuild);
+            // System.out.println("NUM MINERS TO BUILD " + numToBuild);
             
             int minDistance = Integer.MAX_VALUE;
             MapLocation soupLocation = home;
@@ -41,7 +41,7 @@ public strictfp class HQ extends RobotPlayer {
                 if (dist < minDistance) { minDistance = dist; soupLocation = soupToCheck; }
             }
             
-            System.out.println("SOUP " + soupLocation);
+            // System.out.println("SOUP " + soupLocation);
             
             // Find number of defensive spaces - spaces that landscapers should be on
             // Bad, since it doesn't check if the wall is completed - should revise
@@ -74,7 +74,7 @@ public strictfp class HQ extends RobotPlayer {
             
             if (rc.canSubmitTransaction(message, 30)) {
                 rc.submitTransaction(message, 30);
-                System.out.println("SUCCESSFULLY SUBMITTED TRANSACTION");
+                // System.out.println("SUCCESSFULLY SUBMITTED TRANSACTION");
             }
             
             
@@ -123,8 +123,8 @@ public strictfp class HQ extends RobotPlayer {
         
         // After round 200, start considering panicing if no more landscapers are coming
         if (roundNum > 200) {
-            System.out.println("LANDSCAPERS DETECTED " + landscapersDetected);
-            System.out.println("NUM LANDSDCAPERS SRU " + numLandscapersSurrounding);
+            // System.out.println("LANDSCAPERS DETECTED " + landscapersDetected);
+            // System.out.println("NUM LANDSDCAPERS SRU " + numLandscapersSurrounding);
             
             if (landscapersDetected > numLandscapersSurrounding) {
                 numLandscapersSurrounding = landscapersDetected;
@@ -148,7 +148,7 @@ public strictfp class HQ extends RobotPlayer {
             }
         }
         
-        System.out.println("NUM FLOODED TILES " + numFloodedTiles);
+        // System.out.println("NUM FLOODED TILES " + numFloodedTiles);
         
         if ((numFloodedTiles > 50 || (roundsSinceLastLandscaper > 125 + rc.getTeamSoup() / 10)) && !sentPanicMessage && turnCount > 250) {
             int[] message = new int[7];
@@ -165,21 +165,21 @@ public strictfp class HQ extends RobotPlayer {
             if (rc.canSubmitTransaction(message, 1)) {
                 sentPanicMessage = true;
                 rc.submitTransaction(message, 1);
-                System.out.println("SUBMITTED PANIC");
-                System.out.println("SUBMITTED PANIC");
+                // System.out.println("SUBMITTED PANIC");
+                // System.out.println("SUBMITTED PANIC");
     
-                System.out.println("SUBMITTED PANIC");
+                // System.out.println("SUBMITTED PANIC");
     
-                System.out.println("SUBMITTED PANIC");
-                System.out.println("SUBMITTED PANIC");
+                // System.out.println("SUBMITTED PANIC");
+                // System.out.println("SUBMITTED PANIC");
     
-                System.out.println("SUBMITTED PANIC");
+                // System.out.println("SUBMITTED PANIC");
     
             }
         }
         
-        System.out.println("ROUNDS SINCE LAST LANDSCAPER " + roundsSinceLastLandscaper);
-        System.out.println("HAS SENT PANIC " + sentPanicMessage);
+        // System.out.println("ROUNDS SINCE LAST LANDSCAPER " + roundsSinceLastLandscaper);
+        // System.out.println("HAS SENT PANIC " + sentPanicMessage);
         
         
         boolean shouldBuildAnother = false;
@@ -188,12 +188,12 @@ public strictfp class HQ extends RobotPlayer {
     
             for (Transaction t : block) {
                 int[] message = t.getMessage();
-                System.out.println("MESSAGE 0 " + message[0]);
+                // System.out.println("MESSAGE 0 " + message[0]);
                 int previousRoundHash = computeHashForRound(roundNum - 1);
-                System.out.println("PREVIOUS ROUND HASH " + previousRoundHash);
+                // System.out.println("PREVIOUS ROUND HASH " + previousRoundHash);
         
                 if (message[0] == previousRoundHash && message[3] == previousRoundHash) {
-                    System.out.println("SOMEONE ELSE FOUND SOUP - DETECTED AT HQ");
+                    // System.out.println("SOMEONE ELSE FOUND SOUP - DETECTED AT HQ");
                     destination = new MapLocation(message[1], message[2]);
                     soupsFound++;
                 }
@@ -224,14 +224,14 @@ public strictfp class HQ extends RobotPlayer {
     
             if (rc.canSubmitTransaction(message, 1)) {
                 rc.submitTransaction(message, 1);
-                System.out.println("SUCCESSFULLY SUBMITTED REGULAR MESSAGE");
+                // System.out.println("SUCCESSFULLY SUBMITTED REGULAR MESSAGE");
             }
             
         }
         
         // If there is lots of soup nearby, build many miners immediately, but slow down faster - needs to be a bit better
         if (((turnCount % 50 == 0 && turnCount < 400) || 4 > numBuilt) && !sentPanicMessage) {
-            System.out.println("BUILDING MINER");
+            // System.out.println("BUILDING MINER");
             for (Direction dir : directions) {
                 if (rc.canBuildRobot(RobotType.MINER, dir)) {
                     numBuilt++;

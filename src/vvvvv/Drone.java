@@ -8,8 +8,8 @@ public strictfp class Drone extends RobotPlayer {
     
     static void runDeliveryDrone() throws GameActionException {
         
-        System.out.println("IN STATE " + state);
-        System.out.println("DESTINATION " + destination);
+        // System.out.println("IN STATE " + state);
+        // System.out.println("DESTINATION " + destination);
         
         if (turnCount == 1) {
     
@@ -28,16 +28,16 @@ public strictfp class Drone extends RobotPlayer {
             state = 4;
         }
     
-        System.out.println("RUNNING DRONE LOOP");
+        // System.out.println("RUNNING DRONE LOOP");
         Transaction[] b = rc.getBlock(roundNum - 1);
         for (Transaction t : b) {
-            System.out.println("RECIEVED TRANSACTION");
+            // System.out.println("RECIEVED TRANSACTION");
             int[] message = t.getMessage();
             int previousRoundHash = computeHashForRound(roundNum - 1);
         
             if (message[0] == previousRoundHash && message[1] == previousRoundHash && message[2] == previousRoundHash
                     && message[4] == previousRoundHash && message[5] == previousRoundHash) {
-                System.out.println("RECIEVED POOR WALL MESSAGE");
+                // System.out.println("RECIEVED POOR WALL MESSAGE");
                 state = 3;
             }
         }
@@ -52,7 +52,7 @@ public strictfp class Drone extends RobotPlayer {
     
             for (RobotInfo robot : robots) {
                 if (rc.canPickUpUnit(robot.getID())) {
-                    System.out.println("I picked up " + robots[0].getID() + "!");
+                    // System.out.println("I picked up " + robots[0].getID() + "!");
                     state = 2;
                     rc.pickUpUnit(robot.getID());
             
@@ -60,14 +60,14 @@ public strictfp class Drone extends RobotPlayer {
             }
     
             RobotInfo[] nearbyRobots = rc.senseNearbyRobots(-1, enemy);
-            System.out.println("ENEMY ROBOTS NEARBY " + nearbyRobots.length);
+            // System.out.println("ENEMY ROBOTS NEARBY " + nearbyRobots.length);
     
             boolean foundTarget = false;
             for (RobotInfo r : nearbyRobots) {
                 if (!r.getType().isBuilding() && !r.getType().canFly()) {
                     destination = nearbyRobots[0].getLocation();
                     foundTarget = true;
-                    System.out.println("FOUND TARGET");
+                    // System.out.println("FOUND TARGET");
                     break;
                     
                 }
@@ -75,7 +75,7 @@ public strictfp class Drone extends RobotPlayer {
     
     
             if (!foundTarget) {
-                System.out.println("DRONE SEARCHING");
+                // System.out.println("DRONE SEARCHING");
         
                 if (rc.canSenseLocation(destination)) {
                     int quadrant = findQuadrant(currentLocation);
@@ -88,14 +88,14 @@ public strictfp class Drone extends RobotPlayer {
                         if (!explored[i]) { nextQ = i; foundNextQ = true; break; }
                     }
                     if (!foundNextQ) { explored = new boolean[5]; nextQ = quadrant; }
-                    System.out.println("NEXT Q " + nextQ);
+                    // System.out.println("NEXT Q " + nextQ);
                     destination = getQuadrantCorner(nextQ);
             
                 }
             }
     
     
-            System.out.println("TRY MOVING TOWARDS DESTINATION");
+            // System.out.println("TRY MOVING TOWARDS DESTINATION");
             droneTryMovingTowards(destination);
     
         }
@@ -105,10 +105,10 @@ public strictfp class Drone extends RobotPlayer {
             MapLocation me = currentLocation;
             for (Direction dir : directions) {
                 MapLocation loc = me.add(dir);
-                System.out.println("LOOKING AT " + loc + " TO DROP");
+                // System.out.println("LOOKING AT " + loc + " TO DROP");
                 if (rc.canSenseLocation(loc)) {
                     if (rc.senseFlooding(loc)) {
-                        System.out.println("TRYING TO DROP IN " + loc);
+                        // System.out.println("TRYING TO DROP IN " + loc);
                         Direction dropDir = currentLocation.directionTo(loc);
                         if (rc.canDropUnit(dropDir)) { rc.dropUnit(dropDir); state = 1; }
                     }
@@ -135,8 +135,8 @@ public strictfp class Drone extends RobotPlayer {
                 }
             }
             
-            System.out.println("HAVE FOUND FLOOD TO DROP");
-            System.out.println("FLOOD AT  " + destination);
+            // System.out.println("HAVE FOUND FLOOD TO DROP");
+            // System.out.println("FLOOD AT  " + destination);
             
             if (!foundFlood) {
                 if (foundFloodedTile) {
@@ -153,7 +153,7 @@ public strictfp class Drone extends RobotPlayer {
                     for (int i = 1; i < 5; i++) {
                         if (!explored[i]) { nextQ = i; foundNextQ = true; break; }
                     }
-                    System.out.println("NEXT Q " + nextQ);
+                    // System.out.println("NEXT Q " + nextQ);
                     destination = getQuadrantCorner(nextQ);
                     if (!foundNextQ) { explored = new boolean[5]; nextQ = quadrant; }
                 }
@@ -166,16 +166,16 @@ public strictfp class Drone extends RobotPlayer {
         }
         
         if (state == 3) {
-            System.out.println("TRYING TO SURROUND HQ");
+            // System.out.println("TRYING TO SURROUND HQ");
             
             if (rc.isCurrentlyHoldingUnit()) {
                 MapLocation me = currentLocation;
                 for (Direction dir : directions) {
                     MapLocation loc = me.add(dir);
-                    System.out.println("LOOKING AT " + loc + " TO DROP");
+                    // System.out.println("LOOKING AT " + loc + " TO DROP");
                     if (rc.canSenseLocation(loc)) {
                         if (rc.senseFlooding(loc)) {
-                            System.out.println("TRYING TO DROP IN " + loc);
+                            // System.out.println("TRYING TO DROP IN " + loc);
                             Direction dropDir = currentLocation.directionTo(loc);
                             if (rc.canDropUnit(dropDir)) { rc.dropUnit(dropDir); }
                         }
@@ -188,7 +188,7 @@ public strictfp class Drone extends RobotPlayer {
             
             for (RobotInfo robot : robots) {
                 if (rc.canPickUpUnit(robot.getID())) {
-                    System.out.println("I picked up " + robots[0].getID() + "!");
+                    // System.out.println("I picked up " + robots[0].getID() + "!");
                     rc.pickUpUnit(robot.getID());
             
                 }
@@ -227,7 +227,7 @@ public strictfp class Drone extends RobotPlayer {
     
             for (RobotInfo robot : robots) {
                 if (rc.canPickUpUnit(robot.getID())) {
-                    System.out.println("I picked up " + robots[0].getID() + "!");
+                    // System.out.println("I picked up " + robots[0].getID() + "!");
                     rc.pickUpUnit(robot.getID());
                     state = 2;
                 }
@@ -245,11 +245,11 @@ public strictfp class Drone extends RobotPlayer {
                     MapLocation adj = home.add(dir);
                     if (rc.canSenseLocation(adj) && rc.isLocationOccupied(adj) && rc.senseRobotAtLocation(adj).getType() == RobotType.LANDSCAPER) {
                         landscapers++;
-                        System.out.println(dir);
+                        // System.out.println(dir);
                     }
                 }
                 
-                System.out.println("NUM SURROUNDING " + landscapers);
+                // System.out.println("NUM SURROUNDING " + landscapers);
                 
                 if (landscapers == 8) {
                     state = 3;
